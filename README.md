@@ -27,8 +27,8 @@ Click: ✅ **Create New API Token**
 
 Create `.env`:
 
-``` bash
-nano .env
+``` Right Click > create new file name as ".env"
+.env
 ```
 
 ``` env
