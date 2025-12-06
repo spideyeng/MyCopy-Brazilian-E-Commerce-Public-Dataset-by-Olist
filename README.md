@@ -255,3 +255,9 @@ After that, match the csv file rows and columns vs bigquery rows and columns all
 ✅ dbt transformations come next\
 ✅ Raw data fully preserved
 
+Run Dashboard
+
+cd /home/pingh/Brazilian-E-Commerce-Public-Dataset-by-Olist/dashboard
+explorer.exe olist_ml_business_dashboard.html
+
+
