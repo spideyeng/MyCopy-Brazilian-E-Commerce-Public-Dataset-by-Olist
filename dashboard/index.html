@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Brazilian E-Commerce Dashboard (BigQuery)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Google API JS -->
+  <script src="https://apis.google.com/js/api.js"></script>
+
+  <!-- Plotly for interactive charts -->
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #f7f8fb;
+      --card-bg: #ffffff;
+      --accent: #0066cc;
+      --accent-soft: #e6f0ff;
+      --text-main: #222;
+      --text-sub: #555;
+      --border-soft: #dde3f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text-main);
+    }
+
+    header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-soft);
+      background: #ffffff;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    header p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+
+    #auth {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 13px;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 6px 14px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    #signin-button {
+      background: var(--accent);
+      color: white;
+    }
+
+    #signout-button {
+      background: #eee;
+      color: #333;
+    }
+
+    #status {
+      font-size: 12px;
+      color: var(--text-sub);
+    }
+    #status span {
+      background: var(--accent-soft);
+      padding: 4px 8px;
+      border-radius: 999px;
+    }
+    #status.error span {
+      background: #ffe5e5;
+      color: #b00020;
+    }
+
+    main {
+      padding: 16px;
+      max-width: 1400px;
+      margin: 0 auto 40px auto;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1.1fr 0.9fr;
+      grid-template-rows: 340px 340px;
+      grid-gap: 16px;
+    }
+
+    @media (max-width: 1100px) {
+      .grid {
+        grid-template-columns: 1fr;
+        grid-auto-rows: 320px;
+      }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 10px;
+      padding: 8px 12px 6px 12px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--border-soft);
+      margin-bottom: 4px;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .card-subtitle {
+      font-size: 11px;
+      color: var(--text-sub);
+    }
+
+    .chart {
+      flex: 1;
+      min-height: 0;
+    }
+
+    #top-sellers {
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <header-top>
+      <div>
+        <h1>Brazilian E-Commerce Dashboard</h1>
+        <p>Live from BigQuery &mdash; Olist customer, seller, category, and sales metrics.</p>
+      </div>
+      <div id="auth">
+        <button id="signin-button">Sign in with Google</button>
+        <button id="signout-button" style="display:none;">Sign out</button>
+      </div>
+    </header-top>
+    <div id="status"><span>Loading Google API &hellip;</span></div>
+  </header>
+
+  <main>
+    <section class="grid">
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Customer Distribution per State</div>
+            <div class="card-subtitle">Unique customers by state</div>
+          </div>
+        </div>
+        <div id="customer-treemap" class="chart"></div>
+      </article>
+
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Seller Distribution per State</div>
+            <div class="card-subtitle">Sellers by state</div>
+          </div>
+        </div>
+        <div id="seller-treemap" class="chart"></div>
+      </article>
+
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Top 100 Sellers</div>
+            <div class="card-subtitle">By number of order items</div>
+          </div>
+        </div>
+        <div id="top-sellers" class="chart"></div>
+      </article>
+
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Top 50 Product Categories Sold</div>
+            <div class="card-subtitle">Order item count</div>
+          </div>
+        </div>
+        <div id="top-categories" class="chart"></div>
+      </article>
+
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Sales per Month</div>
+            <div class="card-subtitle">Number of orders by purchase month</div>
+          </div>
+        </div>
+        <div id="sales-month" class="chart"></div>
+      </article>
+
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Notes</div>
+            <div class="card-subtitle">Extend with your own charts later</div>
+          </div>
+        </div>
+        <div class="chart" style="padding:12px;font-size:13px;color:#666;">
+          You can duplicate the JS query pattern below to add:
+          average review scores, revenue by state, payment types, etc.
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    /********** 1. EDIT THESE CONSTANTS FOR YOUR PROJECT **********/
+    const CLIENT_ID  = "YOUR_OAUTH_WEB_CLIENT_ID.apps.googleusercontent.com";
+    const API_KEY    = "AIzaSyDb4uWxi5LWSQXzFvf87cJtonj6zMzNCks";
+    const PROJECT_ID = "durable-ripsaw-477914-g0";
+    const DATASET    = "ecommerce"; // e.g. "olist"
+    const SCOPES     = "https://www.googleapis.com/auth/bigquery.readonly";
+
+    const DISCOVERY_DOCS = [
+      "https://bigquery.googleapis.com/$discovery/rest?version=v2"
+    ];
+
+    /********** 2. SMALL HELPERS **********/
+    function setStatus(text, isError=false) {
+      const el = document.getElementById("status");
+      el.className = isError ? "error" : "";
+      el.innerHTML = `<span>${text}</span>`;
+    }
+
+    async function runQuery(sql) {
+      const request = {
+        projectId: PROJECT_ID,
+        resource: {
+          query: sql,
+          useLegacySql: false
+        }
+      };
+      const res = await gapi.client.bigquery.jobs.query(request);
+      const rows = res.result.rows || [];
+      return rows;
+    }
+
+    /********** 3. CHART BUILDERS **********/
+    async function chartCustomerDistribution() {
+      const sql = `
+        SELECT
+          customer_state,
+          COUNT(DISTINCT customer_unique_id) AS customers
+        FROM \`${PROJECT_ID}.${DATASET}.olist_customers_dataset\`
+        GROUP BY customer_state
+      `;
+      const rows = await runQuery(sql);
+      const labels = [];
+      const values = [];
+      rows.forEach(r => {
+        labels.push(r.f[0].v);
+        values.push(Number(r.f[1].v));
+      });
+
+      Plotly.newPlot("customer-treemap", [{
+        type: "treemap",
+        labels: labels,
+        parents: labels.map(() => ""),
+        values: values,
+        textinfo: "label+value",
+        hovertemplate: "State: %{label}<br>Customers: %{value}<extra></extra>"
+      }], {
+        margin: {t:20,l:0,r:0,b:0}
+      }, {responsive:true});
+    }
+
+    async function chartSellerDistribution() {
+      const sql = `
+        SELECT
+          seller_state,
+          COUNT(*) AS sellers
+        FROM \`${PROJECT_ID}.${DATASET}.olist_sellers_dataset\`
+        GROUP BY seller_state
+      `;
+      const rows = await runQuery(sql);
+      const labels = [];
+      const values = [];
+      rows.forEach(r => {
+        labels.push(r.f[0].v);
+        values.push(Number(r.f[1].v));
+      });
+
+      Plotly.newPlot("seller-treemap", [{
+        type: "treemap",
+        labels: labels,
+        parents: labels.map(() => ""),
+        values: values,
+        textinfo: "label+value",
+        hovertemplate: "State: %{label}<br>Sellers: %{value}<extra></extra>"
+      }], {
+        margin: {t:20,l:0,r:0,b:0}
+      }, {responsive:true});
+    }
+
+    async function chartTopSellers() {
+      const sql = `
+        SELECT
+          seller_id,
+          COUNT(*) AS items
+        FROM \`${PROJECT_ID}.${DATASET}.olist_order_items_dataset\`
+        GROUP BY seller_id
+        ORDER BY items DESC
+        LIMIT 100
+      `;
+      const rows = await runQuery(sql);
+      const ranks = [];
+      const values = [];
+      const labels = [];
+      rows.forEach((r, i) => {
+        ranks.push(i + 1);
+        values.push(Number(r.f[1].v));
+        const sid = r.f[0].v || "";
+        labels.push(sid.substring(0, 8) + "…");
+      });
+
+      Plotly.newPlot("top-sellers", [{
+        type: "bar",
+        x: ranks,
+        y: values,
+        text: labels,
+        textposition: "auto",
+        hovertemplate:
+          "Rank: %{x}<br>Seller ID: %{text}<br>Order items: %{y}<extra></extra>"
+      }], {
+        margin: {t:20,l:40,r:10,b:40},
+        xaxis: {title:"Seller rank (1 = highest)"},
+        yaxis: {title:"Number of order items"}
+      }, {responsive:true});
+    }
+
+    async function chartTopCategories() {
+      const sql = `
+        SELECT
+          COALESCE(t.product_category_name_english, p.product_category_name) AS category,
+          COUNT(*) AS items
+        FROM \`${PROJECT_ID}.${DATASET}.olist_order_items_dataset\` oi
+        JOIN \`${PROJECT_ID}.${DATASET}.olist_products_dataset\` p
+          ON oi.product_id = p.product_id
+        LEFT JOIN \`${PROJECT_ID}.${DATASET}.product_category_name_translation\` t
+          ON p.product_category_name = t.product_category_name
+        GROUP BY category
+        ORDER BY items DESC
+        LIMIT 50
+      `;
+      const rows = await runQuery(sql);
+      let arr = rows.map(r => ({
+        name: r.f[0].v || "Unknown",
+        count: Number(r.f[1].v)
+      }));
+      arr.sort((a,b) => a.count - b.count); // ascending for h-bar
+
+      const names = arr.map(x => x.name);
+      const values = arr.map(x => x.count);
+
+      Plotly.newPlot("top-categories", [{
+        type: "bar",
+        orientation: "h",
+        y: names,
+        x: values,
+        hovertemplate: "Category: %{y}<br>Order items: %{x}<extra></extra>"
+      }], {
+        margin: {t:20,l:150,r:10,b:30},
+        xaxis: {title:"Count of order items"}
+      }, {responsive:true});
+    }
+
+    async function chartSalesPerMonth() {
+      const sql = `
+        SELECT
+          FORMAT_TIMESTAMP('%Y-%m', order_purchase_timestamp) AS ym,
+          COUNT(*) AS orders
+        FROM \`${PROJECT_ID}.${DATASET}.olist_orders_dataset\`
+        GROUP BY ym
+        ORDER BY ym
+      `;
+      const rows = await runQuery(sql);
+      const months = [];
+      const counts = [];
+      rows.forEach(r => {
+        months.push(r.f[0].v);
+        counts.push(Number(r.f[1].v));
+      });
+
+      Plotly.newPlot("sales-month", [{
+        type: "scatter",
+        mode: "lines+markers",
+        x: months,
+        y: counts,
+        hovertemplate: "Month: %{x}<br>Orders: %{y}<extra></extra>"
+      }], {
+        margin: {t:20,l:40,r:10,b:40},
+        xaxis: {title:"Month (YYYY-MM)"},
+        yaxis: {title:"Number of orders"}
+      }, {responsive:true});
+    }
+
+    async function renderAllCharts() {
+      setStatus("Running BigQuery SQL & rendering charts &hellip;");
+      await Promise.all([
+        chartCustomerDistribution(),
+        chartSellerDistribution(),
+        chartTopSellers(),
+        chartTopCategories(),
+        chartSalesPerMonth()
+      ]);
+      setStatus("Dashboard ready. Hover / zoom on any chart.");
+    }
+
+    /********** 4. AUTH & INIT **********/
+    function initClient() {
+      gapi.client
+        .init({
+          apiKey: API_KEY,
+          clientId: CLIENT_ID,
+          discoveryDocs: DISCOVERY_DOCS,
+          scope: SCOPES
+        })
+        .then(() => {
+          const auth = gapi.auth2.getAuthInstance();
+          const signInBtn = document.getElementById("signin-button");
+          const signOutBtn = document.getElementById("signout-button");
+
+          function updateSigninStatus(isSignedIn) {
+            if (isSignedIn) {
+              signInBtn.style.display = "none";
+              signOutBtn.style.display = "inline-block";
+              const user = auth.currentUser.get();
+              const email = user.getBasicProfile().getEmail();
+              setStatus(`Signed in as ${email}. Loading charts &hellip;`);
+              renderAllCharts().catch(err => {
+                console.error(err);
+                setStatus("Error running queries. Check console.", true);
+              });
+            } else {
+              signInBtn.style.display = "inline-block";
+              signOutBtn.style.display = "none";
+              setStatus("Please sign in with your Google account to load BigQuery data.");
+            }
+          }
+
+          auth.isSignedIn.listen(updateSigninStatus);
+          updateSigninStatus(auth.isSignedIn.get());
+
+          signInBtn.onclick = () => auth.signIn();
+          signOutBtn.onclick = () => auth.signOut();
+        })
+        .catch(err => {
+          console.error(err);
+          setStatus("Error initializing Google client. Check API key / client ID.", true);
+        });
+    }
+
+    function gapiLoaded() {
+      setStatus("Initializing Google client &hellip;");
+      gapi.load("client:auth2", initClient);
+    }
+
+    // Kick off when script loads
+    window.addEventListener("load", () => {
+      if (typeof gapi !== "undefined") {
+        gapiLoaded();
+      } else {
+        setStatus("Failed to load Google API JS.", true);
+      }
+    });
+  </script>
+</body>
+</html>
