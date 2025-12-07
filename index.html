@@ -379,7 +379,7 @@
         <span class="dot"></span> Sellers
       </button>
       <button class="tab-button" data-tab="orders">
-        <span class="dot"></span> Orders &amp; Reviews
+        <span class="dot"></span> Orders
       </button>
     </div>
     <div id="status"><span>Loading Google client libraries…</span></div>
@@ -392,7 +392,7 @@
     <section id="page-customers" class="page active">
       <div class="page-header">
         <h2>Customer Dashboard</h2>
-        <span>Who we serve • Where they live • How they pay</span>
+        <span>Who we serve • Where they live</span>
       </div>
 
       <div class="kpi-row">
@@ -417,9 +417,9 @@
           <div class="kpi-sub">Unique customer_state</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">Total Payment</div>
-          <div class="kpi-value" id="kpi-cust-total-payment">–</div>
-          <div class="kpi-sub">Sum payment_value (BRL)</div>
+          <div class="kpi-label">Total Revenue</div>
+          <div class="kpi-value" id="kpi-cust-total-revenue">–</div>
+          <div class="kpi-sub">Sum gross_order_item_value (BRL)</div>
         </div>
       </div>
 
@@ -437,11 +437,11 @@
         <article class="card">
           <div class="card-header">
             <div>
-              <div class="card-title">Customer Payment Mix</div>
-              <div class="card-subtitle">Share of total payment value by payment_type</div>
+              <div class="card-title">Revenue Share by State</div>
+              <div class="card-subtitle">Share of gross_order_item_value by customer_state</div>
             </div>
           </div>
-          <div id="cust-payment-type" class="chart"></div>
+          <div id="cust-revenue-by-state" class="chart"></div>
         </article>
 
         <article class="card">
@@ -464,6 +464,17 @@
           <div id="cust-bottom-states" class="chart"></div>
         </article>
 
+        <!-- Customer map card -->
+        <article class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Customer Density Map</div>
+              <div class="card-subtitle">Bubble size = number of customers per state</div>
+            </div>
+          </div>
+          <div id="cust-map" class="chart"></div>
+        </article>
+
         <article class="card">
           <div class="card-header">
             <div>
@@ -479,7 +490,7 @@
             <ul>
               <li>Monitor customer growth year-on-year.</li>
               <li>See which Brazilian states contribute most customers.</li>
-              <li>Track the shift between payment methods (credit card vs boleto, etc.).</li>
+              <li>Compare customer distribution and revenue distribution by state.</li>
             </ul>
           </div>
         </article>
@@ -577,12 +588,12 @@
     </section>
 
     <!-- =========================
-         ORDER & REVIEW DASHBOARD
+         ORDER DASHBOARD
          ========================= -->
     <section id="page-orders" class="page">
       <div class="page-header">
-        <h2>Order &amp; Review Dashboard</h2>
-        <span>Commercial performance • Customer experience • Risk signals</span>
+        <h2>Order Dashboard</h2>
+        <span>Commercial performance • Product mix</span>
       </div>
 
       <div class="kpi-row">
@@ -592,24 +603,24 @@
           <div class="kpi-sub">Distinct order_id</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">Total Product Types</div>
+          <div class="kpi-label">Product Categories</div>
           <div class="kpi-value" id="kpi-order-product-types">–</div>
           <div class="kpi-sub">Distinct product_category_name_english</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">Total Reviews</div>
-          <div class="kpi-value" id="kpi-order-reviews">–</div>
-          <div class="kpi-sub">Records in olist_order_reviews</div>
+          <div class="kpi-label">Customers</div>
+          <div class="kpi-value" id="kpi-order-customers">–</div>
+          <div class="kpi-sub">Distinct customer_id</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">Avg Review Score</div>
-          <div class="kpi-value" id="kpi-order-avg-score">–</div>
-          <div class="kpi-sub">1–5 stars</div>
+          <div class="kpi-label">Sellers</div>
+          <div class="kpi-value" id="kpi-order-sellers">–</div>
+          <div class="kpi-sub">Distinct seller_id</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">Total Revenue</div>
           <div class="kpi-value" id="kpi-order-revenue">–</div>
-          <div class="kpi-sub">Gross order item value (BRL)</div>
+          <div class="kpi-sub">Sum gross_order_item_value (BRL)</div>
         </div>
       </div>
 
@@ -627,31 +638,31 @@
         <article class="card">
           <div class="card-header">
             <div>
-              <div class="card-title">Payment Type by Total Payment</div>
-              <div class="card-subtitle">Share of payment_value by payment_type</div>
+              <div class="card-title">Top Categories by Revenue</div>
+              <div class="card-subtitle">Top 10 product categories (BRL)</div>
             </div>
           </div>
-          <div id="order-payment-type" class="chart"></div>
+          <div id="order-category-revenue" class="chart"></div>
         </article>
 
         <article class="card">
           <div class="card-header">
             <div>
-              <div class="card-title">Orders by Status</div>
-              <div class="card-subtitle">From olist_orders.order_status</div>
+              <div class="card-title">Orders by Year-Month</div>
+              <div class="card-subtitle">Order volume over time (distinct order_id)</div>
             </div>
           </div>
-          <div id="order-by-status" class="chart"></div>
+          <div id="order-orders-yearmonth" class="chart"></div>
         </article>
 
         <article class="card">
           <div class="card-header">
             <div>
-              <div class="card-title">Sellers by Average Review</div>
-              <div class="card-subtitle">Top sellers ranked by mean review_score</div>
+              <div class="card-title">Top Sellers by Revenue</div>
+              <div class="card-subtitle">Top 25 sellers (BRL)</div>
             </div>
           </div>
-          <div id="order-seller-review" class="chart"></div>
+          <div id="order-seller-revenue" class="chart"></div>
         </article>
       </section>
     </section>
@@ -662,12 +673,47 @@
     const CLIENT_ID  = "297911594147-9dbblho1k834h239f7g7tfhqtr6c1gvf.apps.googleusercontent.com";
     const API_KEY    = "AIzaSyDb4uWxi5LWSQXzFvf87cJtonj6zMzNCks";
     const PROJECT_ID = "durable-ripsaw-477914-g0";
-    const DATASET    = "ecommerce";
-    const SCOPES     = "https://www.googleapis.com/auth/bigquery.readonly";
+
+    // Your star-schema datasets in BigQuery
+    const DATASET_DIM   = "ecommerce_dim";
+    const DATASET_FACT  = "ecommerce_fact";
+
+    const SCOPES        = "https://www.googleapis.com/auth/bigquery.readonly";
 
     const DISCOVERY_DOCS = [
       "https://bigquery.googleapis.com/$discovery/rest?version=v2"
     ];
+
+    // Coordinates for Brazilian states (approx centre of each state)
+    const BRAZIL_STATE_COORDS = {
+      "AC": { lat: -9.11,     lon: -70.52 },
+      "AL": { lat: -9.57,     lon: -36.55 },
+      "AP": { lat:  1.0,      lon: -52.0  },
+      "AM": { lat: -5.0,      lon: -63.0  },
+      "BA": { lat: -12.52,    lon: -41.69 },
+      "CE": { lat: -5.08,     lon: -39.65 },
+      "DF": { lat: -15.795,   lon: -47.757778 },
+      "ES": { lat: -20.318889,lon: -40.337778 },
+      "GO": { lat: -15.933333,lon: -50.133333 },
+      "MA": { lat: -6.183333, lon: -45.616667 },
+      "MT": { lat: -15.566667,lon: -56.066667 },
+      "MS": { lat: -20.442778,lon: -54.645833 },
+      "MG": { lat: -19.816667,lon: -43.95 },
+      "PA": { lat: -5.666667, lon: -52.733333 },
+      "PB": { lat: -7.166667, lon: -36.833333 },
+      "PR": { lat: -24.0,     lon: -51.0 },
+      "PE": { lat: -8.34,     lon: -37.81 },
+      "PI": { lat: -8.233333, lon: -43.1 },
+      "RJ": { lat: -22.9,     lon: -43.2 },
+      "RN": { lat: -5.74,     lon: -36.55 },
+      "RO": { lat: -10.9,     lon: -62.76 },
+      "RR": { lat:  2.05,     lon: -61.4 },
+      "RS": { lat: -30.0,     lon: -53.0 },
+      "SC": { lat: -27.25,    lon: -50.333333 },
+      "SE": { lat: -10.59,    lon: -37.38 },
+      "SP": { lat: -23.533333,lon: -46.633333 },
+      "TO": { lat: -10.183333,lon: -48.333333 }
+    };
 
     /********** 2. GLOBAL STATE **********/
     let tokenClient;
@@ -705,11 +751,11 @@
     async function loadCustomerKPIs() {
       const sql = `
         SELECT
-          (SELECT COUNT(*) FROM \`${PROJECT_ID}.${DATASET}.dim_db_customers\`) AS total_customers,
-          (SELECT COUNT(DISTINCT order_id) FROM \`${PROJECT_ID}.${DATASET}.fact_db_order_items\`) AS total_orders,
-          (SELECT COUNT(DISTINCT customer_city) FROM \`${PROJECT_ID}.${DATASET}.dim_db_customers\`) AS cities,
-          (SELECT COUNT(DISTINCT customer_state) FROM \`${PROJECT_ID}.${DATASET}.dim_db_customers\`) AS states,
-          (SELECT COALESCE(SUM(payment_value),0) FROM \`${PROJECT_ID}.${DATASET}.olist_order_payments\`) AS total_payment
+          (SELECT COUNT(*) FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_customers\`) AS total_customers,
+          (SELECT COUNT(DISTINCT order_id) FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\`) AS total_orders,
+          (SELECT COUNT(DISTINCT customer_city) FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_customers\`) AS cities,
+          (SELECT COUNT(DISTINCT customer_state) FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_customers\`) AS states,
+          (SELECT COALESCE(SUM(gross_order_item_value),0) FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\`) AS total_revenue
       `;
       const rows = await runQuery(sql);
       if (!rows.length) return;
@@ -718,18 +764,18 @@
       document.getElementById("kpi-cust-total-orders").textContent    = Number(f[1].v).toLocaleString();
       document.getElementById("kpi-cust-cities").textContent          = Number(f[2].v).toLocaleString();
       document.getElementById("kpi-cust-states").textContent          = Number(f[3].v).toLocaleString();
-      document.getElementById("kpi-cust-total-payment").textContent   = "R$ " + Number(f[4].v || 0).toLocaleString(undefined, {maximumFractionDigits: 0});
+      document.getElementById("kpi-cust-total-revenue").textContent   = "R$ " + Number(f[4].v || 0).toLocaleString(undefined, {maximumFractionDigits: 0});
     }
 
     async function loadSellerKPIs() {
       const sql = `
         SELECT
-          (SELECT COUNT(DISTINCT seller_id) FROM \`${PROJECT_ID}.${DATASET}.dim_db_sellers\`) AS total_sellers,
-          (SELECT COUNT(DISTINCT seller_city) FROM \`${PROJECT_ID}.${DATASET}.dim_db_sellers\`) AS cities,
-          (SELECT COUNT(DISTINCT seller_state) FROM \`${PROJECT_ID}.${DATASET}.dim_db_sellers\`) AS states,
-          (SELECT COUNT(DISTINCT order_id) FROM \`${PROJECT_ID}.${DATASET}.fact_db_order_items\`) AS orders,
-          (SELECT COALESCE(SUM(gross_order_item_value),0) FROM \`${PROJECT_ID}.${DATASET}.fact_db_order_items\`) AS revenue,
-          (SELECT COUNT(DISTINCT product_category_name_english) FROM \`${PROJECT_ID}.${DATASET}.dim_db_products\`) AS product_types
+          (SELECT COUNT(DISTINCT seller_id) FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_sellers\`) AS total_sellers,
+          (SELECT COUNT(DISTINCT seller_city) FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_sellers\`) AS cities,
+          (SELECT COUNT(DISTINCT seller_state) FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_sellers\`) AS states,
+          (SELECT COUNT(DISTINCT order_id) FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\`) AS orders,
+          (SELECT COALESCE(SUM(gross_order_item_value),0) FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\`) AS revenue,
+          (SELECT COUNT(DISTINCT product_category_name_english) FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_products\`) AS product_types
       `;
       const rows = await runQuery(sql);
       if (!rows.length) return;
@@ -739,26 +785,25 @@
       document.getElementById("kpi-seller-states").textContent        = Number(f[2].v).toLocaleString();
       document.getElementById("kpi-seller-orders").textContent        = Number(f[3].v).toLocaleString();
       document.getElementById("kpi-seller-revenue").textContent       = "R$ " + Number(f[4].v || 0).toLocaleString(undefined, {maximumFractionDigits: 0});
-      // extra chart card uses product_types
       document.getElementById("seller-product-types").setAttribute("data-total-product-types", f[5].v);
     }
 
     async function loadOrderKPIs() {
       const sql = `
         SELECT
-          (SELECT COUNT(DISTINCT order_id) FROM \`${PROJECT_ID}.${DATASET}.fact_db_order_items\`) AS orders,
-          (SELECT COUNT(DISTINCT product_category_name_english) FROM \`${PROJECT_ID}.${DATASET}.dim_db_products\`) AS product_types,
-          (SELECT COUNT(*) FROM \`${PROJECT_ID}.${DATASET}.olist_order_reviews\`) AS reviews,
-          (SELECT AVG(review_score) FROM \`${PROJECT_ID}.${DATASET}.olist_order_reviews\`) AS avg_score,
-          (SELECT COALESCE(SUM(gross_order_item_value),0) FROM \`${PROJECT_ID}.${DATASET}.fact_db_order_items\`) AS revenue
+          (SELECT COUNT(DISTINCT order_id) FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\`) AS orders,
+          (SELECT COUNT(DISTINCT product_category_name_english) FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_products\`) AS product_types,
+          (SELECT COUNT(DISTINCT customer_id) FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_customers\`) AS customers,
+          (SELECT COUNT(DISTINCT seller_id) FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_sellers\`) AS sellers,
+          (SELECT COALESCE(SUM(gross_order_item_value),0) FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\`) AS revenue
       `;
       const rows = await runQuery(sql);
       if (!rows.length) return;
       const f = rows[0].f;
       document.getElementById("kpi-order-total-orders").textContent    = Number(f[0].v).toLocaleString();
       document.getElementById("kpi-order-product-types").textContent   = Number(f[1].v).toLocaleString();
-      document.getElementById("kpi-order-reviews").textContent         = Number(f[2].v).toLocaleString();
-      document.getElementById("kpi-order-avg-score").textContent       = Number(f[3].v || 0).toFixed(2);
+      document.getElementById("kpi-order-customers").textContent       = Number(f[2].v).toLocaleString();
+      document.getElementById("kpi-order-sellers").textContent         = Number(f[3].v).toLocaleString();
       document.getElementById("kpi-order-revenue").textContent         = "R$ " + Number(f[4].v || 0).toLocaleString(undefined, {maximumFractionDigits: 0});
     }
 
@@ -768,8 +813,8 @@
         SELECT
           d.year AS year,
           COUNT(DISTINCT f.customer_id) AS customers
-        FROM \`${PROJECT_ID}.${DATASET}.fact_db_order_items\` f
-        JOIN \`${PROJECT_ID}.${DATASET}.dim_db_dates\` d
+        FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\` f
+        JOIN \`${PROJECT_ID}.${DATASET_DIM}.dim_db_dates\` d
           ON f.order_date_key = d.date_key
         GROUP BY year
         ORDER BY year
@@ -796,14 +841,16 @@
       }, { responsive: true });
     }
 
-    async function chartCustomerPaymentType() {
+    async function chartCustomerRevenueByState() {
       const sql = `
         SELECT
-          payment_type,
-          SUM(payment_value) AS total_value
-        FROM \`${PROJECT_ID}.${DATASET}.olist_order_payments\`
-        GROUP BY payment_type
-        ORDER BY total_value DESC
+          c.customer_state,
+          SUM(f.gross_order_item_value) AS revenue
+        FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\` f
+        JOIN \`${PROJECT_ID}.${DATASET_DIM}.dim_db_customers\` c
+          ON f.customer_id = c.customer_id
+        GROUP BY c.customer_state
+        ORDER BY revenue DESC
       `;
       const rows = await runQuery(sql);
       const labels = [];
@@ -812,7 +859,7 @@
         labels.push(r.f[0].v || "Unknown");
         values.push(Number(r.f[1].v));
       });
-      Plotly.newPlot("cust-payment-type", [{
+      Plotly.newPlot("cust-revenue-by-state", [{
         type: "pie",
         labels,
         values,
@@ -829,7 +876,7 @@
         SELECT
           customer_state,
           COUNT(*) AS customers
-        FROM \`${PROJECT_ID}.${DATASET}.dim_db_customers\`
+        FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_customers\`
         GROUP BY customer_state
         ORDER BY customers DESC
         LIMIT 5
@@ -859,7 +906,7 @@
         SELECT
           customer_state,
           COUNT(*) AS customers
-        FROM \`${PROJECT_ID}.${DATASET}.dim_db_customers\`
+        FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_customers\`
         GROUP BY customer_state
         HAVING customers > 0
         ORDER BY customers ASC
@@ -885,14 +932,75 @@
       }, { responsive: true });
     }
 
+    async function chartCustomerMap() {
+      const sql = `
+        SELECT
+          customer_state,
+          COUNT(*) AS customers
+        FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_customers\`
+        GROUP BY customer_state
+      `;
+      const rows = await runQuery(sql);
+
+      const lats = [];
+      const lons = [];
+      const sizes = [];
+      const texts = [];
+      const counts = [];
+
+      rows.forEach(r => {
+        const state  = r.f[0].v;
+        const count  = Number(r.f[1].v);
+        const coords = BRAZIL_STATE_COORDS[state];
+        if (!coords) return;
+        counts.push(count);
+        lats.push(coords.lat);
+        lons.push(coords.lon);
+        texts.push(`${state}: ${count.toLocaleString()} customers`);
+      });
+
+      if (!counts.length) return;
+      const maxCount = Math.max(...counts);
+      counts.forEach(c => {
+        sizes.push(6 + (c / maxCount) * 20);
+      });
+
+      Plotly.newPlot("cust-map", [{
+        type: "scattergeo",
+        mode: "markers",
+        lat: lats,
+        lon: lons,
+        text: texts,
+        marker: {
+          size: sizes,
+          sizemode: "area",
+          opacity: 0.85
+        },
+        hovertemplate: "%{text}<extra></extra>"
+      }], {
+        margin: { t: 0, l: 0, r: 0, b: 0 },
+        geo: {
+          scope: "south america",
+          projection: { type: "mercator" },
+          center: { lat: -14, lon: -52 },
+          lonaxis: { range: [-75, -30] },
+          lataxis: { range: [5, -35] },
+          showland: true,
+          landcolor: "#020617",
+          countrycolor: "#4b5563",
+          showcountries: true
+        }
+      }, { responsive: true });
+    }
+
     /********** 6. SELLER CHARTS **********/
     async function chartSellerFreightByYear() {
       const sql = `
         SELECT
           d.year AS year,
           SUM(f.freight_value) AS freight
-        FROM \`${PROJECT_ID}.${DATASET}.fact_db_order_items\` f
-        JOIN \`${PROJECT_ID}.${DATASET}.dim_db_dates\` d
+        FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\` f
+        JOIN \`${PROJECT_ID}.${DATASET_DIM}.dim_db_dates\` d
           ON f.order_date_key = d.date_key
         GROUP BY year
         ORDER BY year
@@ -921,8 +1029,8 @@
         SELECT
           d.year AS year,
           SUM(f.gross_order_item_value) AS revenue
-        FROM \`${PROJECT_ID}.${DATASET}.fact_db_order_items\` f
-        JOIN \`${PROJECT_ID}.${DATASET}.dim_db_dates\` d
+        FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\` f
+        JOIN \`${PROJECT_ID}.${DATASET_DIM}.dim_db_dates\` d
           ON f.order_date_key = d.date_key
         GROUP BY year
         ORDER BY year
@@ -954,7 +1062,7 @@
         SELECT
           seller_state,
           COUNT(*) AS sellers
-        FROM \`${PROJECT_ID}.${DATASET}.dim_db_sellers\`
+        FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_sellers\`
         GROUP BY seller_state
         ORDER BY sellers DESC
         LIMIT 10
@@ -984,7 +1092,7 @@
         SELECT
           seller_state,
           COUNT(*) AS sellers
-        FROM \`${PROJECT_ID}.${DATASET}.dim_db_sellers\`
+        FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_sellers\`
         GROUP BY seller_state
         HAVING sellers > 0
         ORDER BY sellers ASC
@@ -1015,8 +1123,8 @@
         SELECT
           COALESCE(product_category_name_english, product_category_name) AS category,
           COUNT(*) AS items
-        FROM \`${PROJECT_ID}.${DATASET}.fact_db_order_items\` f
-        JOIN \`${PROJECT_ID}.${DATASET}.dim_db_products\` p
+        FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\` f
+        JOIN \`${PROJECT_ID}.${DATASET_DIM}.dim_db_products\` p
           ON f.product_id = p.product_id
         GROUP BY category
         ORDER BY items DESC
@@ -1041,14 +1149,14 @@
       }, { responsive: true });
     }
 
-    /********** 7. ORDER & REVIEW CHARTS **********/
+    /********** 7. ORDER CHARTS **********/
     async function chartOrderRevenueYear() {
       const sql = `
         SELECT
           d.year AS year,
           SUM(f.gross_order_item_value) AS revenue
-        FROM \`${PROJECT_ID}.${DATASET}.fact_db_order_items\` f
-        JOIN \`${PROJECT_ID}.${DATASET}.dim_db_dates\` d
+        FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\` f
+        JOIN \`${PROJECT_ID}.${DATASET_DIM}.dim_db_dates\` d
           ON f.order_date_key = d.date_key
         GROUP BY year
         ORDER BY year
@@ -1075,95 +1183,98 @@
       }, { responsive: true });
     }
 
-    async function chartOrderPaymentType() {
+    async function chartOrderCategoryRevenue() {
       const sql = `
         SELECT
-          payment_type,
-          SUM(payment_value) AS total_value
-        FROM \`${PROJECT_ID}.${DATASET}.olist_order_payments\`
-        GROUP BY payment_type
-        ORDER BY total_value DESC
+          COALESCE(p.product_category_name_english, p.product_category_name) AS category,
+          SUM(f.gross_order_item_value) AS revenue
+        FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\` f
+        JOIN \`${PROJECT_ID}.${DATASET_DIM}.dim_db_products\` p
+          ON f.product_id = p.product_id
+        GROUP BY category
+        ORDER BY revenue DESC
+        LIMIT 10
       `;
       const rows = await runQuery(sql);
-      const labels = [];
-      const values = [];
+      const categories = [];
+      const revenue = [];
       rows.forEach(r => {
-        labels.push(r.f[0].v || "Unknown");
-        values.push(Number(r.f[1].v));
+        categories.push(r.f[0].v || "Unknown");
+        revenue.push(Number(r.f[1].v));
       });
-      Plotly.newPlot("order-payment-type", [{
-        type: "pie",
-        labels,
-        values,
-        hole: 0.5,
-        hovertemplate: "%{label}<br>R$ %{value:,.0f}<extra></extra>"
+      Plotly.newPlot("order-category-revenue", [{
+        type: "bar",
+        x: revenue,
+        y: categories,
+        orientation: "h",
+        hovertemplate: "%{y}<br>R$ %{x:,.0f}<extra></extra>"
       }], {
-        margin: { t: 18, l: 10, r: 10, b: 10 },
-        legend: { orientation: "h", y: -0.1 }
+        margin: { t: 18, l: 150, r: 10, b: 26 },
+        xaxis: { title: "Revenue (BRL)" }
       }, { responsive: true });
     }
 
-    async function chartOrdersByStatus() {
+    async function chartOrdersYearMonth() {
       const sql = `
         SELECT
-          order_status,
-          COUNT(*) AS orders
-        FROM \`${PROJECT_ID}.${DATASET}.olist_orders\`
-        GROUP BY order_status
-        ORDER BY orders DESC
+          d.year_month,
+          COUNT(DISTINCT f.order_id) AS orders
+        FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\` f
+        JOIN \`${PROJECT_ID}.${DATASET_DIM}.dim_db_dates\` d
+          ON f.order_date_key = d.date_key
+        GROUP BY year_month
+        ORDER BY year_month
       `;
       const rows = await runQuery(sql);
-      const statuses = [];
+      const ym = [];
       const counts = [];
       rows.forEach(r => {
-        statuses.push(r.f[0].v || "Unknown");
+        ym.push(r.f[0].v);
         counts.push(Number(r.f[1].v));
       });
-      Plotly.newPlot("order-by-status", [{
-        type: "bar",
-        x: statuses,
+      Plotly.newPlot("order-orders-yearmonth", [{
+        type: "scatter",
+        mode: "lines+markers",
+        x: ym,
         y: counts,
-        marker: { color: "#38bdf8" },
-        hovertemplate: "Status %{x}<br>Orders: %{y}<extra></extra>"
+        line: { color: "#38bdf8", width: 2 },
+        marker: { size: 5 },
+        hovertemplate: "%{x}<br>Orders: %{y}<extra></extra>"
       }], {
-        margin: { t: 18, l: 40, r: 10, b: 60 },
-        xaxis: { title: "Order status", tickangle: -35 },
-        yaxis: { title: "Orders" }
+        margin: { t: 18, l: 60, r: 10, b: 60 },
+        xaxis: { title: "Year-Month", tickangle: -35 },
+        yaxis: { title: "Distinct orders" }
       }, { responsive: true });
     }
 
-    async function chartSellerByAvgReview() {
+    async function chartTopSellersByRevenue() {
       const sql = `
         SELECT
-          f.seller_id,
-          AVG(r.review_score) AS avg_score,
-          COUNT(*) AS reviews
-        FROM \`${PROJECT_ID}.${DATASET}.olist_order_reviews\` r
-        JOIN \`${PROJECT_ID}.${DATASET}.fact_db_order_items\` f
-          ON r.order_id = f.order_id
+          seller_id,
+          SUM(gross_order_item_value) AS revenue
+        FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\`
         GROUP BY seller_id
-        HAVING reviews >= 10
-        ORDER BY avg_score DESC
+        ORDER BY revenue DESC
         LIMIT 25
       `;
       const rows = await runQuery(sql);
       const sellers = [];
-      const scores = [];
+      const revenue = [];
       rows.forEach(r => {
         const seller = r.f[0].v || "";
         sellers.push(seller.substring(0, 8) + "…");
-        scores.push(Number(r.f[1].v));
+        revenue.push(Number(r.f[1].v));
       });
-      Plotly.newPlot("order-seller-review", [{
+      Plotly.newPlot("order-seller-revenue", [{
         type: "bar",
-        x: scores,
+        x: revenue,
         y: sellers,
         orientation: "h",
         marker: { color: "#22c55e" },
-        hovertemplate: "Seller %{y}<br>Avg score: %{x:.2f}<extra></extra>"
+        hovertemplate: "Seller %{y}<br>R$ %{x:,.0f}<extra></extra>"
       }], {
         margin: { t: 18, l: 80, r: 10, b: 26 },
-        xaxis: { title: "Average review score" }
+        xaxis: { title: "Revenue (BRL)" }
       }, { responsive: true });
     }
 
@@ -1177,9 +1288,10 @@
         loadOrderKPIs(),
 
         chartCustomersByYear(),
-        chartCustomerPaymentType(),
+        chartCustomerRevenueByState(),
         chartCustomerTopStates(),
         chartCustomerBottomStates(),
+        chartCustomerMap(),
 
         chartSellerFreightByYear(),
         chartSellerRevenueByYear(),
@@ -1188,9 +1300,9 @@
         chartSellerProductTypes(),
 
         chartOrderRevenueYear(),
-        chartOrderPaymentType(),
-        chartOrdersByStatus(),
-        chartSellerByAvgReview()
+        chartOrderCategoryRevenue(),
+        chartOrdersYearMonth(),
+        chartTopSellersByRevenue()
       ]);
 
       setStatus("Dashboards ready. Use the tabs to switch views, hover & zoom on any chart.");
