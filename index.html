@@ -609,8 +609,12 @@
     const CLIENT_ID  = "297911594147-9dbblho1k834h239f7g7tfhqtr6c1gvf.apps.googleusercontent.com";
     const API_KEY    = "AIzaSyDb4uWxi5LWSQXzFvf87cJtonj6zMzNCks";
     const PROJECT_ID = "durable-ripsaw-477914-g0";
-    const DATASET    = "dbt_star_schema";   // change to your dataset if different
-    const SCOPES     = "https://www.googleapis.com/auth/bigquery.readonly";
+
+    // NEW: use separate datasets
+    const DIM_DATASET  = "ecommerce_dim";   // all dim_db_* tables
+    const FACT_DATASET = "ecommerce_fact";  // fact_db_order_items
+
+    const SCOPES = "https://www.googleapis.com/auth/bigquery.readonly";
 
     const DISCOVERY_DOCS = [
       "https://bigquery.googleapis.com/$discovery/rest?version=v2"
@@ -654,8 +658,8 @@
             f.customer_id,
             d.year,
             SUM(f.gross_order_item_value) AS revenue
-          FROM \`${PROJECT_ID}.${DATASET}.fact_db_order_items\` f
-          JOIN \`${PROJECT_ID}.${DATASET}.dim_db_dates\` d
+          FROM \`${PROJECT_ID}.${FACT_DATASET}.fact_db_order_items\` f
+          JOIN \`${PROJECT_ID}.${DIM_DATASET}.dim_db_dates\` d
             ON f.order_date_key = d.date_key
           GROUP BY customer_id, year
         )
@@ -685,10 +689,10 @@
             s.seller_state,
             d.year,
             SUM(f.gross_order_item_value) AS revenue
-          FROM \`${PROJECT_ID}.${DATASET}.fact_db_order_items\` f
-          JOIN \`${PROJECT_ID}.${DATASET}.dim_db_sellers\` s
+          FROM \`${PROJECT_ID}.${FACT_DATASET}.fact_db_order_items\` f
+          JOIN \`${PROJECT_ID}.${DIM_DATASET}.dim_db_sellers\` s
             ON f.seller_id = s.seller_id
-          JOIN \`${PROJECT_ID}.${DATASET}.dim_db_dates\` d
+          JOIN \`${PROJECT_ID}.${DIM_DATASET}.dim_db_dates\` d
             ON f.order_date_key = d.date_key
           GROUP BY seller_id, seller_city, seller_state, year
         )
@@ -719,8 +723,8 @@
             d.year,
             COUNT(*) AS items,
             SUM(f.gross_order_item_value) AS revenue
-          FROM \`${PROJECT_ID}.${DATASET}.fact_db_order_items\` f
-          JOIN \`${PROJECT_ID}.${DATASET}.dim_db_dates\` d
+          FROM \`${PROJECT_ID}.${FACT_DATASET}.fact_db_order_items\` f
+          JOIN \`${PROJECT_ID}.${DIM_DATASET}.dim_db_dates\` d
             ON f.order_date_key = d.date_key
           GROUP BY order_id, customer_id, seller_id, year
         ),
@@ -750,8 +754,8 @@
         SELECT
           d.year,
           COUNT(DISTINCT f.customer_id) AS customers
-        FROM \`${PROJECT_ID}.${DATASET}.fact_db_order_items\` f
-        JOIN \`${PROJECT_ID}.${DATASET}.dim_db_dates\` d
+        FROM \`${PROJECT_ID}.${FACT_DATASET}.fact_db_order_items\` f
+        JOIN \`${PROJECT_ID}.${DIM_DATASET}.dim_db_dates\` d
           ON f.order_date_key = d.date_key
         GROUP BY year
         ORDER BY year
@@ -789,10 +793,10 @@
         SELECT
           c.customer_state,
           COUNT(DISTINCT f.customer_id) AS customers
-        FROM \`${PROJECT_ID}.${DATASET}.fact_db_order_items\` f
-        JOIN \`${PROJECT_ID}.${DATASET}.dim_db_customers\` c
+        FROM \`${PROJECT_ID}.${FACT_DATASET}.fact_db_order_items\` f
+        JOIN \`${PROJECT_ID}.${DIM_DATASET}.dim_db_customers\` c
           ON f.customer_id = c.customer_id
-        JOIN \`${PROJECT_ID}.${DATASET}.dim_db_dates\` d
+        JOIN \`${PROJECT_ID}.${DIM_DATASET}.dim_db_dates\` d
           ON f.order_date_key = d.date_key
         ${selectedYear === "ALL" ? "" : "WHERE d.year = " + selectedYear}
         GROUP BY customer_state
@@ -823,10 +827,10 @@
         SELECT
           c.customer_state,
           COUNT(DISTINCT f.customer_id) AS customers
-        FROM \`${PROJECT_ID}.${DATASET}.fact_db_order_items\` f
-        JOIN \`${PROJECT_ID}.${DATASET}.dim_db_customers\` c
+        FROM \`${PROJECT_ID}.${FACT_DATASET}.fact_db_order_items\` f
+        JOIN \`${PROJECT_ID}.${DIM_DATASET}.dim_db_customers\` c
           ON f.customer_id = c.customer_id
-        JOIN \`${PROJECT_ID}.${DATASET}.dim_db_dates\` d
+        JOIN \`${PROJECT_ID}.${DIM_DATASET}.dim_db_dates\` d
           ON f.order_date_key = d.date_key
         ${selectedYear === "ALL" ? "" : "WHERE d.year = " + selectedYear}
         GROUP BY customer_state
@@ -871,10 +875,10 @@
         SELECT
           c.customer_state,
           COUNT(DISTINCT f.customer_id) AS customers
-        FROM \`${PROJECT_ID}.${DATASET}.fact_db_order_items\` f
-        JOIN \`${PROJECT_ID}.${DATASET}.dim_db_customers\` c
+        FROM \`${PROJECT_ID}.${FACT_DATASET}.fact_db_order_items\` f
+        JOIN \`${PROJECT_ID}.${DIM_DATASET}.dim_db_customers\` c
           ON f.customer_id = c.customer_id
-        JOIN \`${PROJECT_ID}.${DATASET}.dim_db_dates\` d
+        JOIN \`${PROJECT_ID}.${DIM_DATASET}.dim_db_dates\` d
           ON f.order_date_key = d.date_key
         ${selectedYear === "ALL" ? "" : "WHERE d.year = " + selectedYear}
         GROUP BY customer_state
@@ -886,532 +890,3 @@
       const sizes = [];
       const texts = [];
       const colors = [];
-
-      let maxCust = 0;
-      rows.forEach(r => {
-        const st = val(r,0);
-        const c  = Number(val(r,1));
-        if (!stateCoords[st]) return;
-        if (c > maxCust) maxCust = c;
-      });
-
-      rows.forEach(r => {
-        const st = val(r,0);
-        const c  = Number(val(r,1));
-        if (!stateCoords[st]) return;
-        const [lat, lng] = stateCoords[st];
-        lats.push(lat);
-        lngs.push(lng);
-        sizes.push(12 + (c / maxCust) * 40);  // big, visible bubbles
-        texts.push(`${st}: ${c.toLocaleString("en-US")} customers`);
-        colors.push(c);
-      });
-
-      Plotly.newPlot("cust-map", [{
-        type: "scattergeo",
-        lat: lats,
-        lon: lngs,
-        mode: "markers",
-        marker: {
-          size: sizes,
-          sizemode: "diameter",
-          opacity: 0.95,
-          color: colors,
-          colorscale: [
-            [0,   "#0ea5e9"],
-            [0.5, "#22d3ee"],
-            [1,   "#2dd4bf"]
-          ],
-          line: { width: 1.5, color: "#020617" }
-        },
-        hovertemplate: "%{text}<extra></extra>",
-        text: texts
-      }], {
-        geo: {
-          scope: "south america",
-          projection: { type: "mercator" },
-          center: { lat: -14.235, lon: -51.9253 },
-          lonaxis: { range: [-85, -30] },
-          lataxis: { range: [-35, 10] },
-          showland: true,
-          landcolor: "#020617",
-          showocean: true,
-          oceancolor: "#020617",
-          showcountries: true,
-          countrycolor: "#1f2937",
-          subunitcolor: "#1f2937"
-        },
-        paper_bgcolor: "rgba(0,0,0,0)",
-        plot_bgcolor: "rgba(0,0,0,0)",
-        margin: { t: 10, l: 0, r: 0, b: 0 }
-      }, {responsive: true});
-    }
-
-    async function renderCustomerDashboard() {
-      await Promise.all([
-        loadCustomerKPIs(),
-        chartCustByYear(),
-        chartCustTopStates(),
-        chartCustBottomStates(),
-        chartCustMap()
-      ]);
-    }
-
-    /********** 6. SELLER CHARTS **********/
-    async function chartSellerFreightYear() {
-      const sql = `
-        SELECT
-          d.year,
-          SUM(f.freight_value) AS freight
-        FROM \`${PROJECT_ID}.${DATASET}.fact_db_order_items\` f
-        JOIN \`${PROJECT_ID}.${DATASET}.dim_db_dates\` d
-          ON f.order_date_key = d.date_key
-        GROUP BY year
-        ORDER BY year
-      `;
-      const rows = await runQuery(sql);
-      const years = rows.map(r => Number(val(r,0)));
-      const freight = rows.map(r => Number(val(r,1)));
-
-      Plotly.newPlot("seller-freight-year", [{
-        type: "pie",
-        labels: years,
-        values: freight,
-        hole: 0.65,
-        hovertemplate: "Year %{label}: R$ %{value:,.0f}<extra></extra>"
-      }], {
-        paper_bgcolor: "rgba(0,0,0,0)",
-        plot_bgcolor: "rgba(0,0,0,0)",
-        margin: { t: 12, l: 4, r: 4, b: 4 },
-        showlegend: true,
-        legend: { font: { color: "#9ca3af" } }
-      }, {responsive: true});
-    }
-
-    async function chartSellerRevenueYear() {
-      const sql = `
-        SELECT
-          d.year,
-          SUM(f.gross_order_item_value) AS revenue
-        FROM \`${PROJECT_ID}.${DATASET}.fact_db_order_items\` f
-        JOIN \`${PROJECT_ID}.${DATASET}.dim_db_dates\` d
-          ON f.order_date_key = d.date_key
-        GROUP BY year
-        ORDER BY year
-      `;
-      const rows = await runQuery(sql);
-      const years = rows.map(r => Number(val(r,0)));
-      const rev   = rows.map(r => Number(val(r,1)));
-
-      Plotly.newPlot("seller-revenue-year", [{
-        type: "scatter",
-        mode: "lines+markers",
-        x: years,
-        y: rev,
-        line: { width: 3 },
-        hovertemplate: "Year %{x}: R$ %{y:,.0f}<extra></extra>"
-      }], {
-        paper_bgcolor: "rgba(0,0,0,0)",
-        plot_bgcolor: "rgba(0,0,0,0)",
-        margin: { t: 12, l: 48, r: 10, b: 36 },
-        xaxis: {
-          title: "Year",
-          color: "#9ca3af",
-          gridcolor: "#111827",
-          type: "category",
-          tickmode: "array",
-          tickvals: years,
-          ticktext: years.map(String)
-        },
-        yaxis: { title: "Revenue (BRL)", color: "#9ca3af", gridcolor: "#111827" }
-      }, {responsive: true});
-    }
-
-    async function chartSellerTopStates() {
-      const sql = `
-        SELECT
-          s.seller_state,
-          COUNT(DISTINCT s.seller_id) AS sellers
-        FROM \`${PROJECT_ID}.${DATASET}.dim_db_sellers\` s
-        GROUP BY seller_state
-        ORDER BY sellers DESC
-        LIMIT 10
-      `;
-      const rows = await runQuery(sql);
-      const states = rows.map(r => val(r,0));
-      const sellers = rows.map(r => Number(val(r,1)));
-
-      Plotly.newPlot("seller-top-states", [{
-        type: "bar",
-        orientation: "h",
-        y: states,
-        x: sellers,
-        hovertemplate: "State %{y}: %{x} sellers<extra></extra>"
-      }], {
-        paper_bgcolor: "rgba(0,0,0,0)",
-        plot_bgcolor: "rgba(0,0,0,0)",
-        margin: { t: 12, l: 70, r: 10, b: 28 },
-        xaxis: { title: "Number of sellers", color: "#9ca3af", gridcolor: "#111827" },
-        yaxis: { color: "#9ca3af" }
-      }, {responsive: true});
-    }
-
-    async function chartSellerBottomStates() {
-      const sql = `
-        SELECT
-          s.seller_state,
-          COUNT(DISTINCT s.seller_id) AS sellers
-        FROM \`${PROJECT_ID}.${DATASET}.dim_db_sellers\` s
-        GROUP BY seller_state
-        HAVING sellers > 0
-        ORDER BY sellers ASC
-        LIMIT 10
-      `;
-      const rows = await runQuery(sql);
-      const states = rows.map(r => val(r,0));
-      const sellers = rows.map(r => Number(val(r,1)));
-
-      Plotly.newPlot("seller-bottom-states", [{
-        type: "bar",
-        orientation: "h",
-        y: states,
-        x: sellers,
-        hovertemplate: "State %{y}: %{x} sellers<extra></extra>"
-      }], {
-        paper_bgcolor: "rgba(0,0,0,0)",
-        plot_bgcolor: "rgba(0,0,0,0)",
-        margin: { t: 12, l: 70, r: 10, b: 28 },
-        xaxis: { title: "Number of sellers", color: "#9ca3af", gridcolor: "#111827" },
-        yaxis: { color: "#9ca3af" }
-      }, {responsive: true});
-    }
-
-    async function chartSellerCategoryBreadth() {
-      const sql = `
-        SELECT
-          COALESCE(p.product_category_name_english, p.product_category_name) AS category,
-          COUNT(*) AS items
-        FROM \`${PROJECT_ID}.${DATASET}.fact_db_order_items\` f
-        JOIN \`${PROJECT_ID}.${DATASET}.dim_db_products\` p
-          ON f.product_id = p.product_id
-        JOIN \`${PROJECT_ID}.${DATASET}.dim_db_dates\` d
-          ON f.order_date_key = d.date_key
-        ${selectedYear === "ALL" ? "" : "WHERE d.year = " + selectedYear}
-        GROUP BY category
-        HAVING items > 2
-        ORDER BY items DESC
-        LIMIT 25
-      `;
-      const rows = await runQuery(sql);
-      const data = rows.map(r => ({
-        cat: val(r,0) || "Unknown",
-        cnt: Number(val(r,1))
-      })).sort((a, b) => a.cnt - b.cnt);
-
-      Plotly.newPlot("seller-category-breadth", [{
-        type: "bar",
-        orientation: "h",
-        y: data.map(d => d.cat),
-        x: data.map(d => d.cnt),
-        hovertemplate: "%{y}: %{x} order items<extra></extra>"
-      }], {
-        paper_bgcolor: "rgba(0,0,0,0)",
-        plot_bgcolor: "rgba(0,0,0,0)",
-        margin: { t: 12, l: 120, r: 10, b: 28 },
-        xaxis: { title: "Order items (> 2)", color: "#9ca3af", gridcolor: "#111827" },
-        yaxis: { color: "#9ca3af" }
-      }, {responsive: true});
-    }
-
-    async function renderSellerDashboard() {
-      await Promise.all([
-        loadSellerKPIs(),
-        chartSellerFreightYear(),
-        chartSellerRevenueYear(),
-        chartSellerTopStates(),
-        chartSellerBottomStates(),
-        chartSellerCategoryBreadth()
-      ]);
-    }
-
-    /********** 7. ORDER CHARTS (with >2 filter) **********/
-    async function chartOrdersTopCategories() {
-      const sql = `
-        WITH base AS (
-          SELECT
-            d.year,
-            COALESCE(p.product_category_name_english, p.product_category_name) AS category,
-            COUNT(DISTINCT f.order_id) AS orders,
-            SUM(f.gross_order_item_value) AS revenue
-          FROM \`${PROJECT_ID}.${DATASET}.fact_db_order_items\` f
-          JOIN \`${PROJECT_ID}.${DATASET}.dim_db_products\` p
-            ON f.product_id = p.product_id
-          JOIN \`${PROJECT_ID}.${DATASET}.dim_db_dates\` d
-            ON f.order_date_key = d.date_key
-          GROUP BY year, category
-        )
-        SELECT
-          category,
-          SUM(revenue) AS revenue
-        FROM base
-        WHERE orders > 2
-        ${selectedYear === "ALL" ? "" : "AND year = " + selectedYear}
-        GROUP BY category
-        ORDER BY revenue DESC
-        LIMIT 15
-      `;
-      const rows = await runQuery(sql);
-      const cats = rows.map(r => val(r,0) || "Unknown");
-      const revs = rows.map(r => Number(val(r,1)));
-
-      Plotly.newPlot("orders-top-categories", [{
-        type: "bar",
-        orientation: "h",
-        y: cats.reverse(),
-        x: revs.reverse(),
-        hovertemplate: "%{y}: R$ %{x:,.0f}<extra></extra>"
-      }], {
-        paper_bgcolor: "rgba(0,0,0,0)",
-        plot_bgcolor: "rgba(0,0,0,0)",
-        margin: { t: 12, l: 135, r: 10, b: 30 },
-        xaxis: { title: "Revenue (BRL, > 2 orders)", color: "#9ca3af", gridcolor: "#111827" },
-        yaxis: { color: "#9ca3af" }
-      }, {responsive: true});
-    }
-
-    async function chartOrdersTopSellers() {
-      const sql = `
-        WITH base AS (
-          SELECT
-            d.year,
-            f.seller_id,
-            COUNT(DISTINCT f.order_id) AS orders,
-            SUM(f.gross_order_item_value) AS revenue
-          FROM \`${PROJECT_ID}.${DATASET}.fact_db_order_items\` f
-          JOIN \`${PROJECT_ID}.${DATASET}.dim_db_dates\` d
-            ON f.order_date_key = d.date_key
-          GROUP BY year, seller_id
-        )
-        SELECT
-          seller_id,
-          SUM(revenue) AS revenue
-        FROM base
-        WHERE orders > 2
-        ${selectedYear === "ALL" ? "" : "AND year = " + selectedYear}
-        GROUP BY seller_id
-        ORDER BY revenue DESC
-        LIMIT 20
-      `;
-      const rows = await runQuery(sql);
-      const ids = rows.map(r => (val(r,0) || "").substring(0, 8) + "…");
-      const revs = rows.map(r => Number(val(r,1)));
-
-      Plotly.newPlot("orders-top-sellers", [{
-        type: "bar",
-        x: revs,
-        y: ids,
-        orientation: "h",
-        hovertemplate: "Seller %{y}: R$ %{x:,.0f}<extra></extra>"
-      }], {
-        paper_bgcolor: "rgba(0,0,0,0)",
-        plot_bgcolor: "rgba(0,0,0,0)",
-        margin: { t: 12, l: 80, r: 10, b: 30 },
-        xaxis: { title: "Revenue (BRL, > 2 orders)", color: "#9ca3af", gridcolor: "#111827" },
-        yaxis: { color: "#9ca3af" }
-      }, {responsive: true});
-    }
-
-    async function chartOrdersByMonth() {
-      const sql = `
-        SELECT
-          d.year,
-          d.year_month,
-          COUNT(DISTINCT f.order_id) AS orders
-        FROM \`${PROJECT_ID}.${DATASET}.fact_db_order_items\` f
-        JOIN \`${PROJECT_ID}.${DATASET}.dim_db_dates\` d
-          ON f.order_date_key = d.date_key
-        GROUP BY year, year_month
-        ORDER BY year_month
-      `;
-      const rows = await runQuery(sql);
-      let filtered = rows;
-      if (selectedYear !== "ALL") {
-        filtered = rows.filter(r => Number(val(r,0)) === Number(selectedYear));
-      }
-      const months = filtered.map(r => val(r,1));
-      const counts = filtered.map(r => Number(val(r,2)));
-
-      Plotly.newPlot("orders-by-month", [{
-        type: "scatter",
-        mode: "lines+markers",
-        x: months,
-        y: counts,
-        line: { width: 2.6 },
-        hovertemplate: "%{x}: %{y} orders<extra></extra>"
-      }], {
-        paper_bgcolor: "rgba(0,0,0,0)",
-        plot_bgcolor: "rgba(0,0,0,0)",
-        margin: { t: 12, l: 48, r: 10, b: 40 },
-        xaxis: { title: "Year-Month", color: "#9ca3af", gridcolor: "#111827" },
-        yaxis: { title: "Orders", color: "#9ca3af", gridcolor: "#111827" }
-      }, {responsive: true});
-    }
-
-    async function renderOrderDashboard() {
-      await Promise.all([
-        loadOrderKPIs(),
-        chartOrdersTopCategories(),
-        chartOrdersTopSellers(),
-        chartOrdersByMonth()
-      ]);
-    }
-
-    /********** 8. RENDER CURRENT TAB **********/
-    async function renderCurrentDashboard() {
-      if (currentTab === "customers") {
-        await renderCustomerDashboard();
-      } else if (currentTab === "sellers") {
-        await renderSellerDashboard();
-      } else if (currentTab === "orders") {
-        await renderOrderDashboard();
-      }
-      setStatus(`Dashboard ready. Year filter: ${selectedYear === "ALL" ? "All" : selectedYear}.`);
-    }
-
-    /********** 9. AUTH & INIT **********/
-    function gisLoaded() {
-      tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: CLIENT_ID,
-        scope: SCOPES,
-        callback: () => {}
-      });
-      gisInited = true;
-      maybeEnableSignin();
-    }
-
-    function gapiLoaded() {
-      gapi.load("client", async () => {
-        try {
-          await gapi.client.init({
-            apiKey: API_KEY,
-            discoveryDocs: DISCOVERY_DOCS
-          });
-          gapiInited = true;
-          maybeEnableSignin();
-        } catch (err) {
-          console.error("Init error:", err);
-          setStatus("Error initialising Google client. Check API Key / Client ID.", true);
-        }
-      });
-    }
-
-    function maybeEnableSignin() {
-      if (gapiInited && gisInited) {
-        const btn = document.getElementById("signin-button");
-        btn.disabled = false;
-        setStatus("Google client ready. Sign in to load live metrics.");
-      }
-    }
-
-    window.addEventListener("load", () => {
-      if (typeof gapi !== "undefined") {
-        gapiLoaded();
-      } else {
-        setStatus("Failed to load Google API JS.", true);
-      }
-
-      const signInBtn  = document.getElementById("signin-button");
-      const signOutBtn = document.getElementById("signout-button");
-
-      signInBtn.onclick = () => {
-        if (!tokenClient) {
-          setStatus("Auth client not ready yet. Try again in a few seconds.", true);
-          return;
-        }
-        tokenClient.callback = (resp) => {
-          if (resp.error) {
-            console.error(resp);
-            const msg =
-              resp?.error_description ||
-              resp?.error ||
-              "Error getting access token.";
-            setStatus(msg, true);
-            return;
-          }
-          signInBtn.style.display  = "none";
-          signOutBtn.style.display = "inline-flex";
-          setStatus("Signed in. Running BigQuery queries…");
-          renderCurrentDashboard().catch(err => {
-            console.error("Query error:", err);
-            const msg =
-              err?.result?.error?.message ||
-              err?.message ||
-              "Error running queries for selected year.";
-            setStatus(msg, true);
-          });
-        };
-        tokenClient.requestAccessToken({ prompt: "consent" });
-      };
-
-      signOutBtn.onclick = () => {
-        const token = gapi.client.getToken();
-        if (token && token.access_token) {
-          google.accounts.oauth2.revoke(token.access_token, () => {
-            gapi.client.setToken(null);
-            signOutBtn.style.display = "none";
-            signInBtn.style.display  = "inline-flex";
-            setStatus("Signed out. Sign in again to refresh the dashboard.");
-          });
-        }
-      };
-
-      // Tab switching
-      document.querySelectorAll(".tab-pill").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const tab = btn.dataset.tab;
-          currentTab = tab;
-
-          document.querySelectorAll(".tab-pill").forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-
-          document.querySelectorAll(".dashboard").forEach(d => d.classList.remove("active"));
-          document.getElementById(`dashboard-${tab}`).classList.add("active");
-
-          if (gapi.client && gapi.client.getToken()) {
-            setStatus(`Loading ${tab} dashboard…`);
-            renderCurrentDashboard().catch(err => {
-              console.error("Query error:", err);
-              const msg =
-                err?.result?.error?.message ||
-                err?.message ||
-                "Error running queries for selected year.";
-              setStatus(msg, true);
-            });
-          }
-        });
-      });
-
-      // Year slicer
-      document.querySelectorAll(".year-pill").forEach(btn => {
-        btn.addEventListener("click", () => {
-          selectedYear = btn.dataset.year;
-          document.querySelectorAll(".year-pill").forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-
-          if (gapi.client && gapi.client.getToken()) {
-            setStatus(`Reloading charts for year: ${selectedYear === "ALL" ? "All" : selectedYear}…`);
-            renderCurrentDashboard().catch(err => {
-              console.error("Query error:", err);
-              const msg =
-                err?.result?.error?.message ||
-                err?.message ||
-                "Error running queries for selected year.";
-              setStatus(msg, true);
-            });
-          }
-        });
-      });
-    });
-  </script>
-</body>
-</html>
