@@ -2,31 +2,29 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Brazilian E-Commerce Dashboards (BigQuery)</title>
+  <title>Brazilian E-Commerce Dashboards (BigQuery + dbt)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Google API JS (BigQuery client) -->
+  <!-- Google API JS -->
   <script src="https://apis.google.com/js/api.js"></script>
   <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async defer onload="gisLoaded()"></script>
-
-  <!-- Plotly for interactive charts -->
+  <!-- Plotly for charts & map -->
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 
   <style>
     :root {
-      /* Deep dark UI with bright teal / cyan accents */
       --bg: #020617;
+      --bg-elevated: #020617;
       --card-bg: #020617;
       --card-border: #1f2937;
       --accent: #22c55e;
-      --accent-strong: #16a34a;
+      --accent-soft: rgba(34, 197, 94, 0.15);
       --accent-alt: #38bdf8;
-      --accent-warm: #f97316;
       --text-main: #e5e7eb;
       --text-sub: #9ca3af;
-      --kpi-border: #111827;
-      --chip-bg: rgba(15, 23, 42, 0.9);
+      --chip-bg: #020617;
+      --danger: #f97373;
       --scrollbar: #1f2933;
     }
 
@@ -37,16 +35,14 @@
 
     body {
       margin: 0;
-      background: radial-gradient(circle at top, #0b1120 0, #020617 40%, #000 100%);
+      background: radial-gradient(circle at top, #020617 0, #000 55%);
       color: var(--text-main);
     }
 
-    /* Header */
     header {
       padding: 14px 22px;
       border-bottom: 1px solid rgba(15, 23, 42, 0.9);
-      background: linear-gradient(to right, #020617 0%, #020617 45%, #022c22 100%);
-      backdrop-filter: blur(12px);
+      background: linear-gradient(to right, #020617 0%, #020617 40%, #022c22 100%);
       position: sticky;
       top: 0;
       z-index: 20;
@@ -68,9 +64,8 @@
     .header-title h1 {
       margin: 0;
       font-size: 18px;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: #e5e7eb;
     }
 
     .header-title span {
@@ -96,8 +91,8 @@
     }
 
     #signin-button {
-      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-      color: #0b1120;
+      background: linear-gradient(135deg, var(--accent), #16a34a);
+      color: #020617;
       box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.2), 0 8px 20px rgba(22, 163, 74, 0.35);
     }
 
@@ -121,27 +116,35 @@
     }
 
     #status.error span {
-      background: rgba(127, 29, 29, 0.8);
+      background: rgba(127, 29, 29, 0.88);
       color: #fecaca;
       border-color: #fecaca;
     }
 
-    /* Tabs */
+    .header-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
     .tabs {
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-top: 10px;
+      flex-wrap: wrap;
     }
 
-    .tab-label {
+    .tab-label, .filter-label {
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.15em;
       color: var(--text-sub);
     }
 
-    .tab-button {
+    .tab-button, .year-button {
       background: rgba(15, 23, 42, 0.9);
       color: var(--text-sub);
       border-radius: 999px;
@@ -157,7 +160,7 @@
       width: 7px;
       height: 7px;
       border-radius: 999px;
-      background: rgba(148, 163, 184, 0.8);
+      background: rgba(148, 163, 184, 0.9);
     }
 
     .tab-button.active {
@@ -172,7 +175,20 @@
       background: #020617;
     }
 
-    /* Layout */
+    .year-filter {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .year-button.active {
+      background: var(--accent-soft);
+      color: var(--accent-alt);
+      border-color: var(--accent-alt);
+      transform: translateY(-1px);
+    }
+
     main {
       padding: 16px;
       max-width: 1440px;
@@ -199,6 +215,7 @@
       align-items: baseline;
       margin-bottom: 10px;
       gap: 10px;
+      flex-wrap: wrap;
     }
 
     .page-header h2 {
@@ -214,7 +231,6 @@
       color: var(--text-sub);
     }
 
-    /* KPI Row */
     .kpi-row {
       display: grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -227,21 +243,22 @@
         grid-template-columns: repeat(3, minmax(0, 1fr));
       }
     }
-    @media (max-width: 750px) {
+
+    @media (max-width: 800px) {
       .kpi-row {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
     }
 
     .kpi-card {
-      background: #020617;
-      border: 1px solid var(--kpi-border);
+      background: radial-gradient(circle at top, #020617 0, #020617 40%, #020617 100%);
+      border: 1px solid #0f172a;
       border-radius: 10px;
       padding: 10px 12px;
       display: flex;
       flex-direction: column;
       gap: 4px;
-      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.7);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.9);
     }
 
     .kpi-label {
@@ -254,7 +271,7 @@
     .kpi-value {
       font-size: 20px;
       font-weight: 600;
-      color: var(--accent-alt);
+      color: #f9fafb;
     }
 
     .kpi-sub {
@@ -262,10 +279,9 @@
       color: var(--text-sub);
     }
 
-    /* Grid */
     .grid {
       display: grid;
-      grid-template-columns: 1.3fr 1.2fr 1.1fr;
+      grid-template-columns: 1.2fr 1.2fr 1.1fr;
       grid-template-rows: 330px 330px;
       gap: 12px;
     }
@@ -276,6 +292,7 @@
         grid-auto-rows: 300px;
       }
     }
+
     @media (max-width: 800px) {
       .grid {
         grid-template-columns: 1fr;
@@ -299,7 +316,7 @@
       justify-content: space-between;
       align-items: baseline;
       padding-bottom: 4px;
-      border-bottom: 1px solid rgba(30, 64, 175, 0.4);
+      border-bottom: 1px solid rgba(30, 64, 175, 0.5);
       margin-bottom: 4px;
     }
 
@@ -318,10 +335,6 @@
     .chart {
       flex: 1;
       min-height: 0;
-    }
-
-    .card-scroll {
-      overflow-y: auto;
     }
 
     #about-text {
@@ -344,9 +357,11 @@
       width: 7px;
       height: 7px;
     }
+
     ::-webkit-scrollbar-track {
       background: transparent;
     }
+
     ::-webkit-scrollbar-thumb {
       background: var(--scrollbar);
       border-radius: 999px;
@@ -354,17 +369,19 @@
   </style>
 </head>
 <body>
-  <header>
-    <div class="header-top">
-      <div class="header-title">
-        <h1>BRAZILIAN E-COMMERCE ANALYTICS</h1>
-        <span>Olist BigQuery Warehouse • dbt star schema • Live dashboards</span>
-      </div>
-      <div id="auth">
-        <button id="signin-button" disabled>Sign in with Google</button>
-        <button id="signout-button" style="display:none;">Sign out</button>
-      </div>
+<header>
+  <div class="header-top">
+    <div class="header-title">
+      <h1>BRAZILIAN E-COMMERCE ANALYTICS</h1>
+      <span>Olist BigQuery Warehouse • dbt star schema • Interactive dashboards</span>
     </div>
+    <div id="auth">
+      <button id="signin-button" disabled>Sign in with Google</button>
+      <button id="signout-button" style="display:none;">Sign out</button>
+    </div>
+  </div>
+
+  <div class="header-bottom">
     <div class="tabs">
       <span class="tab-label">Dashboards</span>
       <button class="tab-button active" data-tab="customers">
@@ -374,1237 +391,1109 @@
         <span class="dot"></span> Sellers
       </button>
       <button class="tab-button" data-tab="orders">
-        <span class="dot"></span> Orders
+        <span class="dot"></span> Orders &amp; Reviews
       </button>
     </div>
-    <div id="status"><span>Loading Google client libraries…</span></div>
-  </header>
 
-  <main>
-    <!-- =========================
-         CUSTOMER DASHBOARD
-         ========================= -->
-    <section id="page-customers" class="page active">
-      <div class="page-header">
-        <h2>Customer Dashboard</h2>
-        <span>Who we serve • Where they live</span>
+    <div class="year-filter">
+      <span class="filter-label">Year</span>
+      <button class="year-button active" data-year="all">All</button>
+      <button class="year-button" data-year="2016">2016</button>
+      <button class="year-button" data-year="2017">2017</button>
+      <button class="year-button" data-year="2018">2018</button>
+    </div>
+  </div>
+
+  <div id="status"><span>Loading Google client libraries…</span></div>
+</header>
+
+<main>
+  <!-- CUSTOMER DASHBOARD -->
+  <section id="page-customers" class="page active">
+    <div class="page-header">
+      <h2>Customer Dashboard</h2>
+      <span>Who we serve • Where they live • How they pay</span>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-label">Total customers</div>
+        <div class="kpi-value" id="kpi-cust-total-customers">–</div>
+        <div class="kpi-sub">Customers with at least one order</div>
       </div>
-
-      <div class="kpi-row">
-        <div class="kpi-card">
-          <div class="kpi-label">Total Customers</div>
-          <div class="kpi-value" id="kpi-cust-total-customers">–</div>
-          <div class="kpi-sub">From dim_db_customers</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Total Orders</div>
-          <div class="kpi-value" id="kpi-cust-total-orders">–</div>
-          <div class="kpi-sub">Distinct order_id</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Customer Cities</div>
-          <div class="kpi-value" id="kpi-cust-cities">–</div>
-          <div class="kpi-sub">Unique customer_city</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Customer States</div>
-          <div class="kpi-value" id="kpi-cust-states">–</div>
-          <div class="kpi-sub">Unique customer_state</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Total Revenue</div>
-          <div class="kpi-value" id="kpi-cust-total-revenue">–</div>
-          <div class="kpi-sub">Sum gross_order_item_value (BRL)</div>
-        </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Total orders</div>
+        <div class="kpi-value" id="kpi-cust-total-orders">–</div>
+        <div class="kpi-sub">Distinct order_id</div>
       </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Customer cities</div>
+        <div class="kpi-value" id="kpi-cust-cities">–</div>
+        <div class="kpi-sub">Distinct customer_city</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Customer states</div>
+        <div class="kpi-value" id="kpi-cust-states">–</div>
+        <div class="kpi-sub">Distinct customer_state</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Total payment</div>
+        <div class="kpi-value" id="kpi-cust-total-payment">–</div>
+        <div class="kpi-sub">Sum payment_value (BRL)</div>
+      </div>
+    </div>
 
-      <section class="grid">
-        <article class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Customers by Year</div>
-              <div class="card-subtitle">Distinct customers with at least one order</div>
-            </div>
+    <section class="grid">
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Total customers by year</div>
+            <div class="card-subtitle">Distinct customers with at least one order</div>
           </div>
-          <div id="cust-by-year" class="chart"></div>
-        </article>
+        </div>
+        <div id="cust-by-year" class="chart"></div>
+      </article>
 
-        <article class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Revenue Share by State</div>
-              <div class="card-subtitle">Share of gross_order_item_value by customer_state</div>
-            </div>
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Revenue share by state</div>
+            <div class="card-subtitle">Share of gross_order_item_value by customer_state</div>
           </div>
-          <div id="cust-revenue-by-state" class="chart"></div>
-        </article>
+        </div>
+        <div id="cust-revenue-state" class="chart"></div>
+      </article>
 
-        <article class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Top 5 States by Customers</div>
-              <div class="card-subtitle">Click a bar to filter details</div>
-            </div>
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Top 5 states by customers</div>
+            <div class="card-subtitle">Based on customer_state</div>
           </div>
-          <div id="cust-top-states" class="chart"></div>
-        </article>
+        </div>
+        <div id="cust-top-states" class="chart"></div>
+      </article>
 
-        <article class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Bottom 5 States by Customers</div>
-              <div class="card-subtitle">States with smallest active base</div>
-            </div>
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Bottom 5 states by customers</div>
+            <div class="card-subtitle">States with smallest active base</div>
           </div>
-          <div id="cust-bottom-states" class="chart"></div>
-        </article>
+        </div>
+        <div id="cust-bottom-states" class="chart"></div>
+      </article>
 
-        <!-- Customer map with bright bubbles -->
-        <article class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Customer Bubble Map</div>
-              <div class="card-subtitle">Click a bubble to filter details</div>
-            </div>
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Customer density map</div>
+            <div class="card-subtitle">Bubble size = number of customers per state</div>
           </div>
-          <div id="cust-map" class="chart"></div>
-        </article>
+        </div>
+        <div id="cust-map" class="chart"></div>
+      </article>
 
-        <!-- Interactive detail panel -->
-        <article class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Selected State Detail</div>
-              <div class="card-subtitle">Driven by clicks on Top States or Map</div>
-            </div>
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">About this view</div>
+            <div class="card-subtitle">Customer-side health check</div>
           </div>
-          <div id="cust-state-detail" class="card-scroll" style="padding:10px;font-size:12px;color:var(--text-sub);">
-            <p>No state selected yet. Click a bar in <em>Top 5 States</em> or a bubble on the map.</p>
-          </div>
-        </article>
-      </section>
+        </div>
+        <div id="about-text">
+          <p>Use this dashboard to understand how broad our customer base is and how it evolves over time.</p>
+          <ul>
+            <li>Monitor customer growth by year.</li>
+            <li>See which Brazilian states concentrate most customers and revenue.</li>
+            <li>Track payment mix and geographic density to plan marketing spend.</li>
+          </ul>
+        </div>
+      </article>
     </section>
+  </section>
 
-    <!-- =========================
-         SELLER DASHBOARD
-         ========================= -->
-    <section id="page-sellers" class="page">
-      <div class="page-header">
-        <h2>Seller Dashboard</h2>
-        <span>Marketplace supply • Seller footprint • Revenue trend</span>
+  <!-- SELLER DASHBOARD -->
+  <section id="page-sellers" class="page">
+    <div class="page-header">
+      <h2>Seller Dashboard</h2>
+      <span>Marketplace supply • Seller footprint • Revenue trend</span>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-label">Total sellers</div>
+        <div class="kpi-value" id="kpi-seller-total-sellers">–</div>
+        <div class="kpi-sub">Distinct seller_id</div>
       </div>
-
-      <div class="kpi-row">
-        <div class="kpi-card">
-          <div class="kpi-label">Total Sellers</div>
-          <div class="kpi-value" id="kpi-seller-total-sellers">–</div>
-          <div class="kpi-sub">Distinct seller_id</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Seller Cities</div>
-          <div class="kpi-value" id="kpi-seller-cities">–</div>
-          <div class="kpi-sub">Unique seller_city</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Seller States</div>
-          <div class="kpi-value" id="kpi-seller-states">–</div>
-          <div class="kpi-sub">Unique seller_state</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Total Orders</div>
-          <div class="kpi-value" id="kpi-seller-orders">–</div>
-          <div class="kpi-sub">Distinct order_id</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Total Revenue</div>
-          <div class="kpi-value" id="kpi-seller-revenue">–</div>
-          <div class="kpi-sub">Sum gross_order_item_value (BRL)</div>
-        </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Seller cities</div>
+        <div class="kpi-value" id="kpi-seller-cities">–</div>
+        <div class="kpi-sub">Distinct seller_city</div>
       </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Seller states</div>
+        <div class="kpi-value" id="kpi-seller-states">–</div>
+        <div class="kpi-sub">Distinct seller_state</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Total orders</div>
+        <div class="kpi-value" id="kpi-seller-orders">–</div>
+        <div class="kpi-sub">Distinct order_id</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Total revenue</div>
+        <div class="kpi-value" id="kpi-seller-revenue">–</div>
+        <div class="kpi-sub">Sum gross_order_item_value (BRL)</div>
+      </div>
+    </div>
 
-      <section class="grid">
-        <article class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Freight by Year</div>
-              <div class="card-subtitle">Sum of freight_value</div>
-            </div>
+    <section class="grid">
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Total freight by year</div>
+            <div class="card-subtitle">Sum of freight_value</div>
           </div>
-          <div id="seller-freight-year" class="chart"></div>
-        </article>
+        </div>
+        <div id="seller-freight-year" class="chart"></div>
+      </article>
 
-        <article class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Revenue Trend by Year</div>
-              <div class="card-subtitle">Gross order item value</div>
-            </div>
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Revenue trend by year</div>
+            <div class="card-subtitle">gross_order_item_value (price + freight)</div>
           </div>
-          <div id="seller-revenue-year" class="chart"></div>
-        </article>
+        </div>
+        <div id="seller-revenue-year" class="chart"></div>
+      </article>
 
-        <article class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Top 10 States by Sellers</div>
-              <div class="card-subtitle">Where supply is concentrated</div>
-            </div>
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Top 10 states by sellers</div>
+            <div class="card-subtitle">Where supply is concentrated</div>
           </div>
-          <div id="seller-top-states" class="chart"></div>
-        </article>
+        </div>
+        <div id="seller-top-states" class="chart"></div>
+      </article>
 
-        <article class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Bottom 10 States by Sellers</div>
-              <div class="card-subtitle">Expansion opportunities</div>
-            </div>
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Bottom 10 states by sellers</div>
+            <div class="card-subtitle">Expansion opportunities</div>
           </div>
-          <div id="seller-bottom-states" class="chart"></div>
-        </article>
+        </div>
+        <div id="seller-bottom-states" class="chart"></div>
+      </article>
 
-        <article class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Product Category Breadth</div>
-              <div class="card-subtitle">Distinct categories sold (top 25)</div>
-            </div>
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Product category breadth</div>
+            <div class="card-subtitle">Distinct product categories sold</div>
           </div>
-          <div id="seller-product-types" class="chart"></div>
-        </article>
-      </section>
+        </div>
+        <div id="seller-product-types" class="chart"></div>
+      </article>
     </section>
+  </section>
 
-    <!-- =========================
-         ORDER DASHBOARD
-         ========================= -->
-    <section id="page-orders" class="page">
-      <div class="page-header">
-        <h2>Order Dashboard</h2>
-        <span>Commercial performance • Product mix</span>
+  <!-- ORDER & REVIEW DASHBOARD -->
+  <section id="page-orders" class="page">
+    <div class="page-header">
+      <h2>Order &amp; Review Dashboard</h2>
+      <span>Commercial performance • Product mix • Customer experience</span>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-label">Total orders</div>
+        <div class="kpi-value" id="kpi-order-total-orders">–</div>
+        <div class="kpi-sub">Distinct order_id</div>
       </div>
-
-      <div class="kpi-row">
-        <div class="kpi-card">
-          <div class="kpi-label">Total Orders</div>
-          <div class="kpi-value" id="kpi-order-total-orders">–</div>
-          <div class="kpi-sub">Distinct order_id</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Product Categories</div>
-          <div class="kpi-value" id="kpi-order-product-types">–</div>
-          <div class="kpi-sub">Distinct product_category_name_english</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Customers</div>
-          <div class="kpi-value" id="kpi-order-customers">–</div>
-          <div class="kpi-sub">Distinct customer_id</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Sellers</div>
-          <div class="kpi-value" id="kpi-order-sellers">–</div>
-          <div class="kpi-sub">Distinct seller_id</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Total Revenue</div>
-          <div class="kpi-value" id="kpi-order-revenue">–</div>
-          <div class="kpi-sub">Sum gross_order_item_value (BRL)</div>
-        </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Product categories</div>
+        <div class="kpi-value" id="kpi-order-product-types">–</div>
+        <div class="kpi-sub">Distinct product_category_name_english</div>
       </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Customer reviews</div>
+        <div class="kpi-value" id="kpi-order-reviews">–</div>
+        <div class="kpi-sub">Records in olist_order_reviews</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Average review score</div>
+        <div class="kpi-value" id="kpi-order-avg-score">–</div>
+        <div class="kpi-sub">1–5 stars</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Total revenue</div>
+        <div class="kpi-value" id="kpi-order-revenue">–</div>
+        <div class="kpi-sub">Sum gross_order_item_value (BRL)</div>
+      </div>
+    </div>
 
-      <section class="grid">
-        <article class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Revenue Trend by Year</div>
-              <div class="card-subtitle">fact_db_order_items + dim_db_dates</div>
-            </div>
+    <section class="grid">
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Revenue trend by year</div>
+            <div class="card-subtitle">Using fact_db_order_items + dim_db_dates</div>
           </div>
-          <div id="order-revenue-year" class="chart"></div>
-        </article>
+        </div>
+        <div id="order-revenue-year" class="chart"></div>
+      </article>
 
-        <article class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Top Categories by Revenue</div>
-              <div class="card-subtitle">Click a bar to see details</div>
-            </div>
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Payment type by total payment</div>
+            <div class="card-subtitle">Share of payment_value by payment_type</div>
           </div>
-          <div id="order-category-revenue" class="chart"></div>
-        </article>
+        </div>
+        <div id="order-payment-type" class="chart"></div>
+      </article>
 
-        <article class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Orders by Year-Month</div>
-              <div class="card-subtitle">Order volume over time</div>
-            </div>
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Orders by status</div>
+            <div class="card-subtitle">From olist_orders.order_status</div>
           </div>
-          <div id="order-orders-yearmonth" class="chart"></div>
-        </article>
+        </div>
+        <div id="order-by-status" class="chart"></div>
+      </article>
 
-        <article class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Top Sellers by Revenue</div>
-              <div class="card-subtitle">Top 25 sellers</div>
-            </div>
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Top sellers by revenue</div>
+            <div class="card-subtitle">Using seller_id from fact_db_order_items</div>
           </div>
-          <div id="order-seller-revenue" class="chart"></div>
-        </article>
+        </div>
+        <div id="order-seller-revenue" class="chart"></div>
+      </article>
 
-        <!-- Interactive category detail panel -->
-        <article class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Selected Category Detail</div>
-              <div class="card-subtitle">Driven by clicks on Top Categories</div>
-            </div>
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Orders by year-month</div>
+            <div class="card-subtitle">Distinct orders over time (filtered by year)</div>
           </div>
-          <div id="order-category-detail" class="card-scroll" style="padding:10px;font-size:12px;color:var(--text-sub);">
-            <p>No category selected yet. Click a bar in <em>Top Categories by Revenue</em>.</p>
-          </div>
-        </article>
-      </section>
+        </div>
+        <div id="order-by-month" class="chart"></div>
+      </article>
     </section>
-  </main>
+  </section>
+</main>
 
-  <script>
-    /********** 1. CONFIG (YOUR KEYS) **********/
-    const CLIENT_ID  = "297911594147-9dbblho1k834h239f7g7tfhqtr6c1gvf.apps.googleusercontent.com";
-    const API_KEY    = "AIzaSyDb4uWxi5LWSQXzFvf87cJtonj6zMzNCks";
-    const PROJECT_ID = "durable-ripsaw-477914-g0";
+<script>
+  /***** 1. CONFIG (IDs & datasets – kept from your previous file) *****/
+  const CLIENT_ID  = "297911594147-9dbblho1k834h239f7g7tfhqtr6c1gvf.apps.googleusercontent.com";
+  const API_KEY    = "AIzaSyDb4uWxi5LWSQXzFvf87cJtonj6zMzNCks";
+  const PROJECT_ID = "durable-ripsaw-477914-g0";
 
-    const DATASET_DIM  = "ecommerce_dim";
-    const DATASET_FACT = "ecommerce_fact";
+  const DIM_DATASET  = "ecommerce_dim";
+  const FACT_DATASET = "ecommerce_fact";
+  const RAW_DATASET  = "ecommerce";
 
-    const SCOPES = "https://www.googleapis.com/auth/bigquery.readonly";
+  const SCOPES = "https://www.googleapis.com/auth/bigquery.readonly";
+  const DISCOVERY_DOCS = [
+    "https://bigquery.googleapis.com/$discovery/rest?version=v2"
+  ];
 
-    const DISCOVERY_DOCS = [
-      "https://bigquery.googleapis.com/$discovery/rest?version=v2"
-    ];
+  /***** 2. STATE *****/
+  let tokenClient;
+  let gapiInited = false;
+  let gisInited = false;
+  let currentYear = null; // null = All
 
-    // unified chart colour palette
-    const CHART_COLORS = {
-      line: "#22c55e",
-      barPrimary: "#38bdf8",
-      barSecondary: "#0ea5e9",
-      barMuted: "#64748b",
-      revenue: "#22c55e",
-      category: "#0ea5e9",
-      pie: ["#22c55e", "#38bdf8", "#0ea5e9", "#f97316", "#eab308", "#a855f7", "#ec4899", "#06b6d4"]
+  function setStatus(text, isError = false) {
+    const el = document.getElementById("status");
+    el.className = isError ? "error" : "";
+    el.innerHTML = `<span>${text}</span>`;
+  }
+
+  function maybeEnableSignin() {
+    if (gapiInited && gisInited) {
+      const btn = document.getElementById("signin-button");
+      btn.disabled = false;
+      setStatus("Google client ready. Sign in to load live BigQuery data.");
+    }
+  }
+
+  function yearFilterClause(columnExpr) {
+    return currentYear ? ` AND ${columnExpr} = ${currentYear}` : "";
+  }
+
+  /***** 3. BIGQUERY WRAPPER *****/
+  async function runQuery(sql) {
+    const request = {
+      projectId: PROJECT_ID,
+      resource: {
+        query: sql,
+        useLegacySql: false
+      }
     };
+    const res = await gapi.client.bigquery.jobs.query(request);
+    return res.result.rows || [];
+  }
 
-    // helper to build dark layout for Plotly
-    function darkLayout(extra) {
-      const base = {
-        paper_bgcolor: "rgba(0,0,0,0)",
-        plot_bgcolor: "#020617",
-        font: { color: "#e5e7eb", size: 11 },
-        xaxis: {
-          titlefont: { color: "#9ca3af" },
-          tickfont: { color: "#9ca3af" },
-          gridcolor: "#111827",
-          zerolinecolor: "#111827"
-        },
-        yaxis: {
-          titlefont: { color: "#9ca3af" },
-          tickfont: { color: "#9ca3af" },
-          gridcolor: "#111827",
-          zerolinecolor: "#111827"
-        },
-        legend: { font: { color: "#9ca3af" } }
-      };
+  /***** 4. KPI LOADERS (year-aware) *****/
+  async function loadCustomerKPIs() {
+    const sql = `
+      SELECT
+        COUNT(DISTINCT f.customer_id) AS total_customers,
+        COUNT(DISTINCT f.order_id)    AS total_orders,
+        COUNT(DISTINCT c.customer_city)  AS cities,
+        COUNT(DISTINCT c.customer_state) AS states,
+        COALESCE(SUM(p.payment_value),0) AS total_payment
+      FROM \`${PROJECT_ID}.${FACT_DATASET}.fact_db_order_items\` f
+      JOIN \`${PROJECT_ID}.${DIM_DATASET}.dim_db_customers\` c
+        ON f.customer_id = c.customer_id
+      JOIN \`${PROJECT_ID}.${DIM_DATASET}.dim_db_dates\` d
+        ON f.order_date_key = d.date_key
+      LEFT JOIN \`${PROJECT_ID}.${RAW_DATASET}.olist_order_payments\` p
+        ON f.order_id = p.order_id
+      WHERE 1=1 ${yearFilterClause("d.year")}
+    `;
+    const rows = await runQuery(sql);
+    if (!rows.length) return;
+    const f = rows[0].f;
+    document.getElementById("kpi-cust-total-customers").textContent = Number(f[0].v || 0).toLocaleString();
+    document.getElementById("kpi-cust-total-orders").textContent    = Number(f[1].v || 0).toLocaleString();
+    document.getElementById("kpi-cust-cities").textContent          = Number(f[2].v || 0).toLocaleString();
+    document.getElementById("kpi-cust-states").textContent          = Number(f[3].v || 0).toLocaleString();
+    document.getElementById("kpi-cust-total-payment").textContent   =
+      "R$ " + Number(f[4].v || 0).toLocaleString(undefined, {maximumFractionDigits: 0});
+  }
 
-      const out = extra ? {...extra} : {};
-      if (extra && extra.xaxis) {
-        out.xaxis = Object.assign({}, base.xaxis, extra.xaxis);
+  async function loadSellerKPIs() {
+    const sql = `
+      SELECT
+        COUNT(DISTINCT f.seller_id)      AS total_sellers,
+        COUNT(DISTINCT s.seller_city)    AS cities,
+        COUNT(DISTINCT s.seller_state)   AS states,
+        COUNT(DISTINCT f.order_id)       AS orders,
+        COALESCE(SUM(f.gross_order_item_value),0) AS revenue
+      FROM \`${PROJECT_ID}.${FACT_DATASET}.fact_db_order_items\` f
+      JOIN \`${PROJECT_ID}.${DIM_DATASET}.dim_db_sellers\` s
+        ON f.seller_id = s.seller_id
+      JOIN \`${PROJECT_ID}.${DIM_DATASET}.dim_db_dates\` d
+        ON f.order_date_key = d.date_key
+      WHERE 1=1 ${yearFilterClause("d.year")}
+    `;
+    const rows = await runQuery(sql);
+    if (!rows.length) return;
+    const f = rows[0].f;
+    document.getElementById("kpi-seller-total-sellers").textContent = Number(f[0].v || 0).toLocaleString();
+    document.getElementById("kpi-seller-cities").textContent        = Number(f[1].v || 0).toLocaleString();
+    document.getElementById("kpi-seller-states").textContent        = Number(f[2].v || 0).toLocaleString();
+    document.getElementById("kpi-seller-orders").textContent        = Number(f[3].v || 0).toLocaleString();
+    document.getElementById("kpi-seller-revenue").textContent       =
+      "R$ " + Number(f[4].v || 0).toLocaleString(undefined, {maximumFractionDigits: 0});
+  }
+
+  async function loadOrderKPIs() {
+    const sql = `
+      SELECT
+        COUNT(DISTINCT f.order_id) AS orders,
+        COUNT(DISTINCT p.product_category_name_english) AS product_types,
+        (SELECT COUNT(*) FROM \`${PROJECT_ID}.${RAW_DATASET}.olist_order_reviews\` r
+          JOIN \`${PROJECT_ID}.${RAW_DATASET}.olist_orders\` o
+            ON r.order_id = o.order_id
+          WHERE 1=1 ${yearFilterClause("EXTRACT(YEAR FROM o.order_purchase_timestamp)")}) AS reviews,
+        (SELECT AVG(review_score) FROM \`${PROJECT_ID}.${RAW_DATASET}.olist_order_reviews\` r
+          JOIN \`${PROJECT_ID}.${RAW_DATASET}.olist_orders\` o
+            ON r.order_id = o.order_id
+          WHERE 1=1 ${yearFilterClause("EXTRACT(YEAR FROM o.order_purchase_timestamp)")}) AS avg_score,
+        COALESCE(SUM(f.gross_order_item_value),0) AS revenue
+      FROM \`${PROJECT_ID}.${FACT_DATASET}.fact_db_order_items\` f
+      JOIN \`${PROJECT_ID}.${DIM_DATASET}.dim_db_products\` p
+        ON f.product_id = p.product_id
+      JOIN \`${PROJECT_ID}.${DIM_DATASET}.dim_db_dates\` d
+        ON f.order_date_key = d.date_key
+      WHERE 1=1 ${yearFilterClause("d.year")}
+    `;
+    const rows = await runQuery(sql);
+    if (!rows.length) return;
+    const f = rows[0].f;
+    document.getElementById("kpi-order-total-orders").textContent  = Number(f[0].v || 0).toLocaleString();
+    document.getElementById("kpi-order-product-types").textContent = Number(f[1].v || 0).toLocaleString();
+    document.getElementById("kpi-order-reviews").textContent       = Number(f[2].v || 0).toLocaleString();
+    document.getElementById("kpi-order-avg-score").textContent     = Number(f[3].v || 0).toFixed(2);
+    document.getElementById("kpi-order-revenue").textContent       =
+      "R$ " + Number(f[4].v || 0).toLocaleString(undefined, {maximumFractionDigits: 0});
+  }
+
+  /***** 5. CUSTOMER CHARTS *****/
+  async function chartCustomersByYear() {
+    const sql = `
+      SELECT
+        d.year AS year,
+        COUNT(DISTINCT f.customer_id) AS customers
+      FROM \`${PROJECT_ID}.${FACT_DATASET}.fact_db_order_items\` f
+      JOIN \`${PROJECT_ID}.${DIM_DATASET}.dim_db_dates\` d
+        ON f.order_date_key = d.date_key
+      GROUP BY year
+      ORDER BY year
+    `;
+    const rows = await runQuery(sql);
+    const years = [];
+    const counts = [];
+    rows.forEach(r => {
+      years.push(r.f[0].v);
+      counts.push(Number(r.f[1].v));
+    });
+    Plotly.newPlot("cust-by-year", [{
+      type: "scatter",
+      mode: "lines+markers",
+      x: years,
+      y: counts,
+      line: { shape: "linear", width: 3, color: "#4ade80" },
+      marker: { size: 7, color: "#bbf7d0" },
+      hovertemplate: "Year %{x}<br>Customers: %{y}<extra></extra>"
+    }], {
+      margin: { t: 20, l: 50, r: 10, b: 36 },
+      paper_bgcolor: "rgba(0,0,0,0)",
+      plot_bgcolor: "#020617",
+      font: { color: "#e5e7eb" },
+      xaxis: { title: "Year", gridcolor: "#111827" },
+      yaxis: { title: "Distinct customers", gridcolor: "#111827" }
+    }, { responsive: true });
+  }
+
+  async function chartCustomerRevenueByState() {
+    const sql = `
+      SELECT
+        c.customer_state,
+        SUM(f.gross_order_item_value) AS revenue
+      FROM \`${PROJECT_ID}.${FACT_DATASET}.fact_db_order_items\` f
+      JOIN \`${PROJECT_ID}.${DIM_DATASET}.dim_db_customers\` c
+        ON f.customer_id = c.customer_id
+      JOIN \`${PROJECT_ID}.${DIM_DATASET}.dim_db_dates\` d
+        ON f.order_date_key = d.date_key
+      WHERE 1=1 ${yearFilterClause("d.year")}
+      GROUP BY customer_state
+      ORDER BY revenue DESC
+    `;
+    const rows = await runQuery(sql);
+    const states = [];
+    const values = [];
+    rows.forEach(r => {
+      states.push(r.f[0].v || "Unknown");
+      values.push(Number(r.f[1].v));
+    });
+    Plotly.newPlot("cust-revenue-state", [{
+      type: "pie",
+      labels: states,
+      values: values,
+      hole: 0.6,
+      marker: {
+        colors: ["#38bdf8","#6366f1","#4ade80","#f97316","#e5e7eb","#a855f7","#22c55e"]
+      },
+      textinfo: "percent",
+      hovertemplate: "%{label}<br>R$ %{value:,.0f}<extra></extra>"
+    }], {
+      margin: { t: 22, l: 10, r: 10, b: 10 },
+      paper_bgcolor: "rgba(0,0,0,0)",
+      plot_bgcolor: "#020617",
+      font: { color: "#e5e7eb" },
+      legend: { orientation: "h", y: -0.12 }
+    }, { responsive: true });
+  }
+
+  async function chartCustomerTopStates(limit = 5, elementId = "cust-top-states", asc = false) {
+    const dir = asc ? "ASC" : "DESC";
+    const sql = `
+      SELECT
+        customer_state,
+        COUNT(*) AS customers
+      FROM \`${PROJECT_ID}.${DIM_DATASET}.dim_db_customers\`
+      GROUP BY customer_state
+      ORDER BY customers ${dir}
+      LIMIT ${limit}
+    `;
+    const rows = await runQuery(sql);
+    const states = [];
+    const counts = [];
+    rows.forEach(r => {
+      states.push(r.f[0].v);
+      counts.push(Number(r.f[1].v));
+    });
+    Plotly.newPlot(elementId, [{
+      type: "bar",
+      x: counts,
+      y: states,
+      orientation: "h",
+      marker: { color: asc ? "#6b7280" : "#38bdf8" },
+      hovertemplate: "State %{y}<br>Customers: %{x}<extra></extra>"
+    }], {
+      margin: { t: 20, l: 60, r: 10, b: 30 },
+      paper_bgcolor: "rgba(0,0,0,0)",
+      plot_bgcolor: "#020617",
+      font: { color: "#e5e7eb" },
+      xaxis: { title: "Customers", gridcolor: "#111827" },
+      yaxis: { gridcolor: "#111827" }
+    }, { responsive: true });
+  }
+
+  // Bubble map over Brazil – using state centroids
+  const brazilStateCoords = {
+    "AC": [-70.5, -9.0],
+    "AL": [-36.8, -9.6],
+    "AM": [-64.8, -3.1],
+    "AP": [-51.8,  1.4],
+    "BA": [-41.7, -12.7],
+    "CE": [-39.0, -5.0],
+    "DF": [-47.9, -15.8],
+    "ES": [-40.5, -19.5],
+    "GO": [-49.3, -15.8],
+    "MA": [-45.0, -5.4],
+    "MG": [-44.0, -19.5],
+    "MS": [-54.5, -20.5],
+    "MT": [-56.0, -12.5],
+    "PA": [-52.0, -3.0],
+    "PB": [-36.4, -7.1],
+    "PE": [-37.0, -8.4],
+    "PI": [-42.8, -7.1],
+    "PR": [-51.5, -25.2],
+    "RJ": [-43.2, -22.9],
+    "RN": [-36.8, -5.8],
+    "RO": [-63.9, -10.8],
+    "RR": [-61.0,  2.0],
+    "RS": [-52.3, -30.0],
+    "SC": [-50.9, -27.3],
+    "SE": [-37.2, -10.6],
+    "SP": [-46.6, -23.6],
+    "TO": [-48.3, -10.2]
+  };
+
+  async function chartCustomerMap() {
+    const sql = `
+      SELECT
+        customer_state,
+        COUNT(*) AS customers
+      FROM \`${PROJECT_ID}.${DIM_DATASET}.dim_db_customers\`
+      GROUP BY customer_state
+    `;
+    const rows = await runQuery(sql);
+    const lons = [];
+    const lats = [];
+    const sizes = [];
+    const texts = [];
+    rows.forEach(r => {
+      const state = r.f[0].v;
+      const count = Number(r.f[1].v);
+      const coords = brazilStateCoords[state];
+      if (!coords) return;
+      lons.push(coords[0]);
+      lats.push(coords[1]);
+      sizes.push(Math.sqrt(count) * 1.2); // bubble size
+      texts.push(`${state}: ${count.toLocaleString()} customers`);
+    });
+
+    Plotly.newPlot("cust-map", [{
+      type: "scattergeo",
+      lon: lons,
+      lat: lats,
+      text: texts,
+      mode: "markers",
+      marker: {
+        size: sizes,
+        color: "#38bdf8",
+        opacity: 0.8,
+        line: { width: 1, color: "#e5e7eb" }
+      },
+      hovertemplate: "%{text}<extra></extra>"
+    }], {
+      geo: {
+        scope: "south america",
+        projection: { type: "mercator" },
+        center: { lon: -55, lat: -14 },
+        lonaxis: { range: [-77, -32] },
+        lataxis: { range: [-34, 6] },
+        showcountries: true,
+        countrycolor: "#4b5563",
+        showland: true,
+        landcolor: "#020617",
+        showocean: true,
+        oceancolor: "#020617",
+        showlakes: false,
+        bgcolor: "rgba(0,0,0,0)"
+      },
+      margin: { t: 10, l: 10, r: 10, b: 10 },
+      paper_bgcolor: "rgba(0,0,0,0)",
+      plot_bgcolor: "#020617",
+      font: { color: "#e5e7eb" }
+    }, { responsive: true });
+  }
+
+  /***** 6. SELLER CHARTS *****/
+  async function chartSellerFreightByYear() {
+    const sql = `
+      SELECT
+        d.year AS year,
+        SUM(f.freight_value) AS freight
+      FROM \`${PROJECT_ID}.${FACT_DATASET}.fact_db_order_items\` f
+      JOIN \`${PROJECT_ID}.${DIM_DATASET}.dim_db_dates\` d
+        ON f.order_date_key = d.date_key
+      WHERE 1=1 ${yearFilterClause("d.year")}
+      GROUP BY year
+      ORDER BY year
+    `;
+    const rows = await runQuery(sql);
+    const years = [];
+    const freight = [];
+    rows.forEach(r => {
+      years.push(r.f[0].v);
+      freight.push(Number(r.f[1].v));
+    });
+    Plotly.newPlot("seller-freight-year", [{
+      type: "pie",
+      labels: years,
+      values: freight,
+      hole: 0.55,
+      marker: { colors: ["#38bdf8","#4ade80","#a855f7"] },
+      hovertemplate: "Year %{label}<br>Freight R$ %{value:,.0f}<extra></extra>"
+    }], {
+      margin: { t: 18, l: 10, r: 10, b: 10 },
+      paper_bgcolor: "rgba(0,0,0,0)",
+      plot_bgcolor: "#020617",
+      font: { color: "#e5e7eb" },
+      legend: { orientation: "h", y: -0.15 }
+    }, { responsive: true });
+  }
+
+  async function chartSellerRevenueByYear() {
+    const sql = `
+      SELECT
+        d.year AS year,
+        SUM(f.gross_order_item_value) AS revenue
+      FROM \`${PROJECT_ID}.${FACT_DATASET}.fact_db_order_items\` f
+      JOIN \`${PROJECT_ID}.${DIM_DATASET}.dim_db_dates\` d
+        ON f.order_date_key = d.date_key
+      WHERE 1=1 ${yearFilterClause("d.year")}
+      GROUP BY year
+      ORDER BY year
+    `;
+    const rows = await runQuery(sql);
+    const years = [];
+    const revenue = [];
+    rows.forEach(r => {
+      years.push(r.f[0].v);
+      revenue.push(Number(r.f[1].v));
+    });
+    Plotly.newPlot("seller-revenue-year", [{
+      type: "scatter",
+      mode: "lines+markers",
+      x: years,
+      y: revenue,
+      line: { color: "#4ade80", width: 3 },
+      marker: { size: 7, color: "#bbf7d0" },
+      hovertemplate: "Year %{x}<br>Revenue R$ %{y:,.0f}<extra></extra>"
+    }], {
+      margin: { t: 20, l: 60, r: 10, b: 36 },
+      paper_bgcolor: "rgba(0,0,0,0)",
+      plot_bgcolor: "#020617",
+      font: { color: "#e5e7eb" },
+      xaxis: { title: "Year", gridcolor: "#111827" },
+      yaxis: { title: "Revenue (BRL)", gridcolor: "#111827" }
+    }, { responsive: true });
+  }
+
+  async function chartSellerTopStates(limit = 10, elementId = "seller-top-states", asc = false) {
+    const dir = asc ? "ASC" : "DESC";
+    const sql = `
+      SELECT
+        seller_state,
+        COUNT(*) AS sellers
+      FROM \`${PROJECT_ID}.${DIM_DATASET}.dim_db_sellers\`
+      GROUP BY seller_state
+      HAVING sellers > 0
+      ORDER BY sellers ${dir}
+      LIMIT ${limit}
+    `;
+    const rows = await runQuery(sql);
+    const states = [];
+    const counts = [];
+    rows.forEach(r => {
+      states.push(r.f[0].v);
+      counts.push(Number(r.f[1].v));
+    });
+    Plotly.newPlot(elementId, [{
+      type: "bar",
+      x: counts,
+      y: states,
+      orientation: "h",
+      marker: { color: asc ? "#6b7280" : "#38bdf8" },
+      hovertemplate: "State %{y}<br>Sellers: %{x}<extra></extra>"
+    }], {
+      margin: { t: 20, l: 60, r: 10, b: 30 },
+      paper_bgcolor: "rgba(0,0,0,0)",
+      plot_bgcolor: "#020617",
+      font: { color: "#e5e7eb" },
+      xaxis: { title: "Number of sellers", gridcolor: "#111827" },
+      yaxis: { gridcolor: "#111827" }
+    }, { responsive: true });
+  }
+
+  async function chartSellerProductTypes() {
+    const sql = `
+      SELECT
+        COALESCE(p.product_category_name_english, p.product_category_name) AS category,
+        COUNT(*) AS items
+      FROM \`${PROJECT_ID}.${FACT_DATASET}.fact_db_order_items\` f
+      JOIN \`${PROJECT_ID}.${DIM_DATASET}.dim_db_products\` p
+        ON f.product_id = p.product_id
+      JOIN \`${PROJECT_ID}.${DIM_DATASET}.dim_db_dates\` d
+        ON f.order_date_key = d.date_key
+      WHERE 1=1 ${yearFilterClause("d.year")}
+      GROUP BY category
+      ORDER BY items DESC
+      LIMIT 25
+    `;
+    const rows = await runQuery(sql);
+    const names = [];
+    const items = [];
+    rows.forEach(r => {
+      names.push(r.f[0].v || "Unknown");
+      items.push(Number(r.f[1].v));
+    });
+    Plotly.newPlot("seller-product-types", [{
+      type: "bar",
+      x: items,
+      y: names,
+      orientation: "h",
+      marker: { color: "#e5e7eb" },
+      hovertemplate: "%{y}<br>Order items: %{x}<extra></extra>"
+    }], {
+      margin: { t: 20, l: 150, r: 10, b: 30 },
+      paper_bgcolor: "rgba(0,0,0,0)",
+      plot_bgcolor: "#020617",
+      font: { color: "#e5e7eb" },
+      xaxis: { title: "Order items", gridcolor: "#111827" },
+      yaxis: { gridcolor: "#111827" }
+    }, { responsive: true });
+  }
+
+  /***** 7. ORDER & REVIEW CHARTS *****/
+  async function chartOrderRevenueYear() {
+    const sql = `
+      SELECT
+        d.year AS year,
+        SUM(f.gross_order_item_value) AS revenue
+      FROM \`${PROJECT_ID}.${FACT_DATASET}.fact_db_order_items\` f
+      JOIN \`${PROJECT_ID}.${DIM_DATASET}.dim_db_dates\` d
+        ON f.order_date_key = d.date_key
+      WHERE 1=1 ${yearFilterClause("d.year")}
+      GROUP BY year
+      ORDER BY year
+    `;
+    const rows = await runQuery(sql);
+    const years = [];
+    const revenue = [];
+    rows.forEach(r => {
+      years.push(r.f[0].v);
+      revenue.push(Number(r.f[1].v));
+    });
+    Plotly.newPlot("order-revenue-year", [{
+      type: "scatter",
+      mode: "lines+markers",
+      x: years,
+      y: revenue,
+      line: { color: "#4ade80", width: 3 },
+      marker: { size: 7, color: "#bbf7d0" },
+      hovertemplate: "Year %{x}<br>Revenue R$ %{y:,.0f}<extra></extra>"
+    }], {
+      margin: { t: 20, l: 60, r: 10, b: 36 },
+      paper_bgcolor: "rgba(0,0,0,0)",
+      plot_bgcolor: "#020617",
+      font: { color: "#e5e7eb" },
+      xaxis: { title: "Year", gridcolor: "#111827" },
+      yaxis: { title: "Revenue (BRL)", gridcolor: "#111827" }
+    }, { responsive: true });
+  }
+
+  async function chartOrderPaymentType() {
+    const sql = `
+      SELECT
+        payment_type,
+        SUM(payment_value) AS total_value
+      FROM \`${PROJECT_ID}.${RAW_DATASET}.olist_order_payments\` p
+      JOIN \`${PROJECT_ID}.${RAW_DATASET}.olist_orders\` o
+        ON p.order_id = o.order_id
+      WHERE 1=1 ${yearFilterClause("EXTRACT(YEAR FROM o.order_purchase_timestamp)")}
+      GROUP BY payment_type
+      ORDER BY total_value DESC
+    `;
+    const rows = await runQuery(sql);
+    const labels = [];
+    const values = [];
+    rows.forEach(r => {
+      labels.push(r.f[0].v || "Unknown");
+      values.push(Number(r.f[1].v));
+    });
+    Plotly.newPlot("order-payment-type", [{
+      type: "pie",
+      labels,
+      values,
+      hole: 0.55,
+      marker: { colors: ["#38bdf8","#4ade80","#a855f7","#e5e7eb"] },
+      hovertemplate: "%{label}<br>R$ %{value:,.0f}<extra></extra>"
+    }], {
+      margin: { t: 18, l: 10, r: 10, b: 10 },
+      paper_bgcolor: "rgba(0,0,0,0)",
+      plot_bgcolor: "#020617",
+      font: { color: "#e5e7eb" },
+      legend: { orientation: "h", y: -0.15 }
+    }, { responsive: true });
+  }
+
+  async function chartOrdersByStatus() {
+    const sql = `
+      SELECT
+        order_status,
+        COUNT(*) AS orders
+      FROM \`${PROJECT_ID}.${RAW_DATASET}.olist_orders\`
+      WHERE 1=1 ${yearFilterClause("EXTRACT(YEAR FROM order_purchase_timestamp)")}
+      GROUP BY order_status
+      ORDER BY orders DESC
+    `;
+    const rows = await runQuery(sql);
+    const statuses = [];
+    const counts = [];
+    rows.forEach(r => {
+      statuses.push(r.f[0].v || "Unknown");
+      counts.push(Number(r.f[1].v));
+    });
+    Plotly.newPlot("order-by-status", [{
+      type: "bar",
+      x: statuses,
+      y: counts,
+      marker: { color: "#38bdf8" },
+      hovertemplate: "Status %{x}<br>Orders: %{y}<extra></extra>"
+    }], {
+      margin: { t: 20, l: 50, r: 10, b: 60 },
+      paper_bgcolor: "rgba(0,0,0,0)",
+      plot_bgcolor: "#020617",
+      font: { color: "#e5e7eb" },
+      xaxis: { title: "Order status", tickangle: -35, gridcolor: "#111827" },
+      yaxis: { title: "Orders", gridcolor: "#111827" }
+    }, { responsive: true });
+  }
+
+  async function chartTopSellersByRevenue() {
+    const sql = `
+      SELECT
+        f.seller_id,
+        SUM(f.gross_order_item_value) AS revenue
+      FROM \`${PROJECT_ID}.${FACT_DATASET}.fact_db_order_items\` f
+      JOIN \`${PROJECT_ID}.${DIM_DATASET}.dim_db_dates\` d
+        ON f.order_date_key = d.date_key
+      WHERE 1=1 ${yearFilterClause("d.year")}
+      GROUP BY seller_id
+      ORDER BY revenue DESC
+      LIMIT 20
+    `;
+    const rows = await runQuery(sql);
+    const sellers = [];
+    const revenue = [];
+    rows.forEach(r => {
+      const id = r.f[0].v || "";
+      // use short label Seller-XXXX (no names available in dataset)
+      sellers.push("Seller " + id.substring(0, 4));
+      revenue.push(Number(r.f[1].v));
+    });
+    Plotly.newPlot("order-seller-revenue", [{
+      type: "bar",
+      x: revenue,
+      y: sellers,
+      orientation: "h",
+      marker: { color: "#22c55e" },
+      hovertemplate: "%{y}<br>Revenue R$ %{x:,.0f}<extra></extra>"
+    }], {
+      margin: { t: 20, l: 90, r: 10, b: 30 },
+      paper_bgcolor: "rgba(0,0,0,0)",
+      plot_bgcolor: "#020617",
+      font: { color: "#e5e7eb" },
+      xaxis: { title: "Revenue (BRL)", gridcolor: "#111827" },
+      yaxis: { gridcolor: "#111827" }
+    }, { responsive: true });
+  }
+
+  async function chartOrdersByMonth() {
+    const sql = `
+      SELECT
+        FORMAT('%04d-%02d', d.year, d.month) AS year_month,
+        d.year,
+        d.month,
+        COUNT(DISTINCT f.order_id) AS orders
+      FROM \`${PROJECT_ID}.${FACT_DATASET}.fact_db_order_items\` f
+      JOIN \`${PROJECT_ID}.${DIM_DATASET}.dim_db_dates\` d
+        ON f.order_date_key = d.date_key
+      WHERE 1=1 ${yearFilterClause("d.year")}
+      GROUP BY year_month, d.year, d.month
+      HAVING orders > 0
+      ORDER BY d.year, d.month
+    `;
+    const rows = await runQuery(sql);
+    const labels = [];
+    const counts = [];
+    rows.forEach(r => {
+      labels.push(r.f[0].v);
+      counts.push(Number(r.f[3].v));
+    });
+    Plotly.newPlot("order-by-month", [{
+      type: "scatter",
+      mode: "lines+markers",
+      x: labels,
+      y: counts,
+      line: { color: "#38bdf8", width: 2 },
+      marker: { size: 5, color: "#e5e7eb" },
+      hovertemplate: "%{x}<br>Orders: %{y}<extra></extra>"
+    }], {
+      margin: { t: 20, l: 60, r: 20, b: 80 },
+      paper_bgcolor: "rgba(0,0,0,0)",
+      plot_bgcolor: "#020617",
+      font: { color: "#e5e7eb" },
+      xaxis: { title: "Year-Month", tickangle: -40, gridcolor: "#111827" },
+      yaxis: { title: "Distinct orders", gridcolor: "#111827" }
+    }, { responsive: true });
+  }
+
+  /***** 8. RENDER ALL (respecting currentYear) *****/
+  async function renderAll() {
+    setStatus(currentYear
+      ? `Running BigQuery SQL for year ${currentYear}…`
+      : "Running BigQuery SQL for all years…");
+
+    await Promise.all([
+      loadCustomerKPIs(),
+      loadSellerKPIs(),
+      loadOrderKPIs(),
+
+      chartCustomersByYear(),
+      chartCustomerRevenueByState(),
+      chartCustomerTopStates(5, "cust-top-states", false),
+      chartCustomerTopStates(5, "cust-bottom-states", true),
+      chartCustomerMap(),
+
+      chartSellerFreightByYear(),
+      chartSellerRevenueByYear(),
+      chartSellerTopStates(10, "seller-top-states", false),
+      chartSellerTopStates(10, "seller-bottom-states", true),
+      chartSellerProductTypes(),
+
+      chartOrderRevenueYear(),
+      chartOrderPaymentType(),
+      chartOrdersByStatus(),
+      chartTopSellersByRevenue(),
+      chartOrdersByMonth()
+    ]);
+
+    setStatus("Dashboards ready. Use the tabs and year filter, hover and zoom on any chart.");
+  }
+
+  /***** 9. AUTH & INIT *****/
+  function gisLoaded() {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: SCOPES,
+      callback: () => {}
+    });
+    gisInited = true;
+    maybeEnableSignin();
+  }
+
+  function gapiLoaded() {
+    gapi.load("client", async () => {
+      try {
+        await gapi.client.init({
+          apiKey: API_KEY,
+          discoveryDocs: DISCOVERY_DOCS
+        });
+        gapiInited = true;
+        maybeEnableSignin();
+      } catch (err) {
+        console.error("Init error:", err);
+        setStatus("Error initializing Google client. Check API key / client ID.", true);
       }
-      if (extra && extra.yaxis) {
-        out.yaxis = Object.assign({}, base.yaxis, extra.yaxis);
-      }
-      return Object.assign(base, out);
+    });
+  }
+
+  window.addEventListener("load", () => {
+    if (typeof gapi !== "undefined") {
+      gapiLoaded();
+    } else {
+      setStatus("Failed to load Google API JS.", true);
     }
 
-    // Rough coordinates for Brazilian states (centre of each state)
-    const BRAZIL_STATE_COORDS = {
-      "AC": { lat: -9.11,     lon: -70.52 },
-      "AL": { lat: -9.57,     lon: -36.55 },
-      "AP": { lat:  1.0,      lon: -52.0  },
-      "AM": { lat: -5.0,      lon: -63.0  },
-      "BA": { lat: -12.52,    lon: -41.69 },
-      "CE": { lat: -5.08,     lon: -39.65 },
-      "DF": { lat: -15.8,     lon: -47.9  },
-      "ES": { lat: -20.3,     lon: -40.3  },
-      "GO": { lat: -15.9,     lon: -50.1  },
-      "MA": { lat: -6.2,      lon: -45.6  },
-      "MT": { lat: -15.6,     lon: -56.1  },
-      "MS": { lat: -20.4,     lon: -54.6  },
-      "MG": { lat: -19.8,     lon: -43.9  },
-      "PA": { lat: -5.7,      lon: -52.7  },
-      "PB": { lat: -7.2,      lon: -36.8  },
-      "PR": { lat: -24.0,     lon: -51.0  },
-      "PE": { lat: -8.3,      lon: -37.8  },
-      "PI": { lat: -8.2,      lon: -43.1  },
-      "RJ": { lat: -22.9,     lon: -43.2  },
-      "RN": { lat: -5.7,      lon: -36.5  },
-      "RO": { lat: -10.9,     lon: -62.8  },
-      "RR": { lat:  2.05,     lon: -61.4  },
-      "RS": { lat: -30.0,     lon: -53.0  },
-      "SC": { lat: -27.25,    lon: -50.3  },
-      "SE": { lat: -10.6,     lon: -37.4  },
-      "SP": { lat: -23.5,     lon: -46.6  },
-      "TO": { lat: -10.2,     lon: -48.3  }
-    };
+    const signInBtn = document.getElementById("signin-button");
+    const signOutBtn = document.getElementById("signout-button");
 
-    /********** 2. GLOBAL STATE **********/
-    let tokenClient;
-    let gapiInited = false;
-    let gisInited  = false;
-
-    function setStatus(text, isError = false) {
-      const el = document.getElementById("status");
-      el.className = isError ? "error" : "";
-      el.innerHTML = `<span>${text}</span>`;
-    }
-
-    function maybeEnableSignin() {
-      if (gapiInited && gisInited) {
-        const btn = document.getElementById("signin-button");
-        btn.disabled = false;
-        setStatus("Google client ready. Sign in to load live BigQuery data.");
-      }
-    }
-
-    /********** 3. BIGQUERY HELPER **********/
-    async function runQuery(sql) {
-      const request = {
-        projectId: PROJECT_ID,
-        resource: {
-          query: sql,
-          useLegacySql: false
-        }
-      };
-      const res = await gapi.client.bigquery.jobs.query(request);
-      return res.result.rows || [];
-    }
-
-    /********** 4. KPI LOADERS **********/
-    async function loadCustomerKPIs() {
-      const sql = `
-        SELECT
-          (SELECT COUNT(*) FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_customers\`) AS total_customers,
-          (SELECT COUNT(DISTINCT order_id) FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\`) AS total_orders,
-          (SELECT COUNT(DISTINCT customer_city) FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_customers\`) AS cities,
-          (SELECT COUNT(DISTINCT customer_state) FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_customers\`) AS states,
-          (SELECT COALESCE(SUM(gross_order_item_value),0) FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\`) AS total_revenue
-      `;
-      const rows = await runQuery(sql);
-      if (!rows.length) return;
-      const f = rows[0].f;
-      document.getElementById("kpi-cust-total-customers").textContent = Number(f[0].v).toLocaleString();
-      document.getElementById("kpi-cust-total-orders").textContent    = Number(f[1].v).toLocaleString();
-      document.getElementById("kpi-cust-cities").textContent          = Number(f[2].v).toLocaleString();
-      document.getElementById("kpi-cust-states").textContent          = Number(f[3].v).toLocaleString();
-      document.getElementById("kpi-cust-total-revenue").textContent   =
-        "R$ " + Number(f[4].v || 0).toLocaleString(undefined, {maximumFractionDigits: 0});
-    }
-
-    async function loadSellerKPIs() {
-      const sql = `
-        SELECT
-          (SELECT COUNT(DISTINCT seller_id) FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_sellers\`) AS total_sellers,
-          (SELECT COUNT(DISTINCT seller_city) FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_sellers\`) AS cities,
-          (SELECT COUNT(DISTINCT seller_state) FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_sellers\`) AS states,
-          (SELECT COUNT(DISTINCT order_id) FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\`) AS orders,
-          (SELECT COALESCE(SUM(gross_order_item_value),0) FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\`) AS revenue,
-          (SELECT COUNT(DISTINCT product_category_name_english) FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_products\`) AS product_types
-      `;
-      const rows = await runQuery(sql);
-      if (!rows.length) return;
-      const f = rows[0].f;
-      document.getElementById("kpi-seller-total-sellers").textContent = Number(f[0].v).toLocaleString();
-      document.getElementById("kpi-seller-cities").textContent        = Number(f[1].v).toLocaleString();
-      document.getElementById("kpi-seller-states").textContent        = Number(f[2].v).toLocaleString();
-      document.getElementById("kpi-seller-orders").textContent        = Number(f[3].v).toLocaleString();
-      document.getElementById("kpi-seller-revenue").textContent       =
-        "R$ " + Number(f[4].v || 0).toLocaleString(undefined, {maximumFractionDigits: 0});
-    }
-
-    async function loadOrderKPIs() {
-      const sql = `
-        SELECT
-          (SELECT COUNT(DISTINCT order_id) FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\`) AS orders,
-          (SELECT COUNT(DISTINCT product_category_name_english) FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_products\`) AS product_types,
-          (SELECT COUNT(DISTINCT customer_id) FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_customers\`) AS customers,
-          (SELECT COUNT(DISTINCT seller_id) FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_sellers\`) AS sellers,
-          (SELECT COALESCE(SUM(gross_order_item_value),0) FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\`) AS revenue
-      `;
-      const rows = await runQuery(sql);
-      if (!rows.length) return;
-      const f = rows[0].f;
-      document.getElementById("kpi-order-total-orders").textContent  = Number(f[0].v).toLocaleString();
-      document.getElementById("kpi-order-product-types").textContent = Number(f[1].v).toLocaleString();
-      document.getElementById("kpi-order-customers").textContent     = Number(f[2].v).toLocaleString();
-      document.getElementById("kpi-order-sellers").textContent       = Number(f[3].v).toLocaleString();
-      document.getElementById("kpi-order-revenue").textContent       =
-        "R$ " + Number(f[4].v || 0).toLocaleString(undefined, {maximumFractionDigits: 0});
-    }
-
-    /********** 5. CUSTOMER CHARTS & DETAIL **********/
-    async function chartCustomersByYear() {
-      const sql = `
-        SELECT
-          d.year AS year,
-          COUNT(DISTINCT f.customer_id) AS customers
-        FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\` f
-        JOIN \`${PROJECT_ID}.${DATASET_DIM}.dim_db_dates\` d
-          ON f.order_date_key = d.date_key
-        GROUP BY year
-        ORDER BY year
-      `;
-      const rows = await runQuery(sql);
-      const years = [];
-      const counts = [];
-      rows.forEach(r => {
-        years.push(r.f[0].v);
-        counts.push(Number(r.f[1].v));
-      });
-      Plotly.newPlot("cust-by-year", [{
-        type: "scatter",
-        mode: "lines+markers",
-        x: years,
-        y: counts,
-        line: { shape: "linear", width: 3, color: CHART_COLORS.line },
-        marker: { size: 6 }
-      }], darkLayout({
-        margin: { t: 18, l: 40, r: 10, b: 32 },
-        xaxis: { title: "Year" },
-        yaxis: { title: "Distinct customers" }
-      }), { responsive: true });
-    }
-
-    async function chartCustomerRevenueByState() {
-      const sql = `
-        SELECT
-          c.customer_state,
-          SUM(f.gross_order_item_value) AS revenue
-        FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\` f
-        JOIN \`${PROJECT_ID}.${DATASET_DIM}.dim_db_customers\` c
-          ON f.customer_id = c.customer_id
-        GROUP BY c.customer_state
-        ORDER BY revenue DESC
-      `;
-      const rows = await runQuery(sql);
-      const labels = [];
-      const values = [];
-      rows.forEach(r => {
-        labels.push(r.f[0].v || "Unknown");
-        values.push(Number(r.f[1].v));
-      });
-      Plotly.newPlot("cust-revenue-by-state", [{
-        type: "pie",
-        labels,
-        values,
-        hole: 0.45,
-        marker: { colors: CHART_COLORS.pie }
-      }], darkLayout({
-        margin: { t: 18, l: 10, r: 10, b: 10 },
-        legend: { orientation: "h", y: -0.1 }
-      }), { responsive: true });
-    }
-
-    async function chartCustomerTopStates() {
-      const sql = `
-        SELECT
-          customer_state,
-          COUNT(*) AS customers
-        FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_customers\`
-        GROUP BY customer_state
-        ORDER BY customers DESC
-        LIMIT 5
-      `;
-      const rows = await runQuery(sql);
-      const states = [];
-      const counts = [];
-      rows.forEach(r => {
-        states.push(r.f[0].v);
-        counts.push(Number(r.f[1].v));
-      });
-
-      const divId = "cust-top-states";
-
-      Plotly.newPlot(divId, [{
-        type: "bar",
-        x: states,
-        y: counts,
-        marker: { color: CHART_COLORS.barPrimary }
-      }], darkLayout({
-        margin: { t: 18, l: 40, r: 10, b: 32 },
-        xaxis: { title: "State" },
-        yaxis: { title: "Customers" }
-      }), { responsive: true });
-
-      // make bars clickable to update state panel
-      const chartDiv = document.getElementById(divId);
-      chartDiv.on("plotly_click", (data) => {
-        if (!data || !data.points || !data.points.length) return;
-        const stateCode = data.points[0].x;
-        setStatus(`Filtering detail panel for state ${stateCode}…`);
-        renderCustomerStateDetail(stateCode)
-          .then(() => setStatus(`Dashboards ready. State filter: ${stateCode}.`))
-          .catch(err => {
-            console.error(err);
-            setStatus("Error loading state detail panel.", true);
-          });
-      });
-    }
-
-    async function chartCustomerBottomStates() {
-      const sql = `
-        SELECT
-          customer_state,
-          COUNT(*) AS customers
-        FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_customers\`
-        GROUP BY customer_state
-        HAVING customers > 0
-        ORDER BY customers ASC
-        LIMIT 5
-      `;
-      const rows = await runQuery(sql);
-      const states = [];
-      const counts = [];
-      rows.forEach(r => {
-        states.push(r.f[0].v);
-        counts.push(Number(r.f[1].v));
-      });
-      Plotly.newPlot("cust-bottom-states", [{
-        type: "bar",
-        x: states,
-        y: counts,
-        marker: { color: CHART_COLORS.barMuted }
-      }], darkLayout({
-        margin: { t: 18, l: 40, r: 10, b: 32 },
-        xaxis: { title: "State" },
-        yaxis: { title: "Customers" }
-      }), { responsive: true });
-    }
-
-    async function chartCustomerMap() {
-      const sql = `
-        SELECT
-          customer_state,
-          COUNT(*) AS customers
-        FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_customers\`
-        GROUP BY customer_state
-      `;
-      const rows = await runQuery(sql);
-
-      const lats = [];
-      const lons = [];
-      const sizes = [];
-      const texts = [];
-      const counts = [];
-      const states = [];
-
-      rows.forEach(r => {
-        const state  = r.f[0].v;
-        const count  = Number(r.f[1].v);
-        const coords = BRAZIL_STATE_COORDS[state];
-        if (!coords) return;
-        states.push(state);
-        counts.push(count);
-        lats.push(coords.lat);
-        lons.push(coords.lon);
-        texts.push(`${state}: ${count.toLocaleString()} customers`);
-      });
-
-      if (!counts.length) return;
-      const maxCount = Math.max(...counts);
-      counts.forEach(c => {
-        sizes.push(8 + (c / maxCount) * 24);   // a bit bigger for visibility
-      });
-
-      const divId = "cust-map";
-
-      Plotly.newPlot(divId, [{
-        type: "scattergeo",
-        mode: "markers",
-        lat: lats,
-        lon: lons,
-        text: texts,
-        marker: {
-          size: sizes,
-          sizemode: "area",
-          opacity: 0.95,
-          color: counts,
-          colorscale: [
-            [0, "#0ea5e9"],
-            [0.5, "#22c55e"],
-            [1, "#f97316"]
-          ],
-          reversescale: false,
-          line: { color: "#e5e7eb", width: 0.7 }
-        }
-      }], {
-        paper_bgcolor: "rgba(0,0,0,0)",
-        plot_bgcolor: "#020617",
-        margin: { t: 0, l: 0, r: 0, b: 0 },
-        geo: {
-          scope: "south america",
-          projection: { type: "mercator" },
-          center: { lat: -14, lon: -52 },
-          lonaxis: { range: [-75, -32] },
-          lataxis: { range: [5, -35] },
-          showland: true,
-          landcolor: "#020617",
-          countrycolor: "#4b5563",
-          subunitcolor: "#374151",
-          showcountries: true,
-          showlakes: false,
-          showrivers: false
-        }
-      }, { responsive: true });
-
-      // allow clicking bubbles to update detail panel
-      const mapDiv = document.getElementById(divId);
-      mapDiv.on("plotly_click", (data) => {
-        if (!data || !data.points || !data.points.length) return;
-        const pointIndex = data.points[0].pointIndex;
-        const stateCode  = states[pointIndex];
-        setStatus(`Filtering detail panel for state ${stateCode}…`);
-        renderCustomerStateDetail(stateCode)
-          .then(() => setStatus(`Dashboards ready. State filter: ${stateCode}.`))
-          .catch(err => {
-            console.error(err);
-            setStatus("Error loading state detail panel.", true);
-          });
-      });
-    }
-
-    // state detail panel
-    async function renderCustomerStateDetail(stateCode) {
-      if (!stateCode) return;
-
-      const sql = `
-        SELECT
-          c.customer_state,
-          COUNT(DISTINCT f.customer_id) AS customers,
-          COUNT(DISTINCT f.order_id)    AS orders,
-          SUM(f.gross_order_item_value) AS revenue
-        FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\` f
-        JOIN \`${PROJECT_ID}.${DATASET_DIM}.dim_db_customers\` c
-          ON f.customer_id = c.customer_id
-        WHERE c.customer_state = '${stateCode}'
-        GROUP BY c.customer_state
-      `;
-      const rows = await runQuery(sql);
-      const panel = document.getElementById("cust-state-detail");
-
-      if (!rows.length) {
-        panel.innerHTML = `<p>No data found for state <strong>${stateCode}</strong>.</p>`;
+    signInBtn.onclick = () => {
+      if (!tokenClient) {
+        setStatus("Auth client not ready yet. Please wait a moment and try again.", true);
         return;
       }
-
-      const f = rows[0].f;
-      const customers = Number(f[1].v || 0);
-      const orders    = Number(f[2].v || 0);
-      const revenue   = Number(f[3].v || 0);
-
-      panel.innerHTML = `
-        <p style="margin-top:0;">State: <strong style="color:var(--accent-alt);">${stateCode}</strong></p>
-        <ul style="padding-left:18px; margin-top:4px;">
-          <li>Customers: <strong>${customers.toLocaleString()}</strong></li>
-          <li>Orders: <strong>${orders.toLocaleString()}</strong></li>
-          <li>Revenue: <strong>R$ ${revenue.toLocaleString(undefined,{maximumFractionDigits:0})}</strong></li>
-        </ul>
-        <p style="margin-top:6px;">
-          Tip: click a different bar in <em>Top 5 States by Customers</em> or a different map bubble.
-        </p>
-      `;
-    }
-
-    /********** 6. SELLER CHARTS **********/
-    async function chartSellerFreightByYear() {
-      const sql = `
-        SELECT
-          d.year AS year,
-          SUM(f.freight_value) AS freight
-        FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\` f
-        JOIN \`${PROJECT_ID}.${DATASET_DIM}.dim_db_dates\` d
-          ON f.order_date_key = d.date_key
-        GROUP BY year
-        ORDER BY year
-      `;
-      const rows = await runQuery(sql);
-      const years = [];
-      const freight = [];
-      rows.forEach(r => {
-        years.push(r.f[0].v);
-        freight.push(Number(r.f[1].v));
-      });
-      Plotly.newPlot("seller-freight-year", [{
-        type: "pie",
-        labels: years,
-        values: freight,
-        hole: 0.5,
-        marker: { colors: CHART_COLORS.pie }
-      }], darkLayout({
-        margin: { t: 18, l: 10, r: 10, b: 10 },
-        legend: { orientation: "h", y: -0.1 }
-      }), { responsive: true });
-    }
-
-    async function chartSellerRevenueByYear() {
-      const sql = `
-        SELECT
-          d.year AS year,
-          SUM(f.gross_order_item_value) AS revenue
-        FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\` f
-        JOIN \`${PROJECT_ID}.${DATASET_DIM}.dim_db_dates\` d
-          ON f.order_date_key = d.date_key
-        GROUP BY year
-        ORDER BY year
-      `;
-      const rows = await runQuery(sql);
-      const years = [];
-      const revenue = [];
-      rows.forEach(r => {
-        years.push(r.f[0].v);
-        revenue.push(Number(r.f[1].v));
-      });
-      Plotly.newPlot("seller-revenue-year", [{
-        type: "scatter",
-        mode: "lines+markers",
-        x: years,
-        y: revenue,
-        line: { color: CHART_COLORS.revenue, width: 3 },
-        marker: { size: 6 }
-      }], darkLayout({
-        margin: { t: 18, l: 60, r: 10, b: 32 },
-        xaxis: { title: "Year" },
-        yaxis: { title: "Revenue (BRL)" }
-      }), { responsive: true });
-    }
-
-    async function chartSellerTopStates() {
-      const sql = `
-        SELECT
-          seller_state,
-          COUNT(*) AS sellers
-        FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_sellers\`
-        GROUP BY seller_state
-        ORDER BY sellers DESC
-        LIMIT 10
-      `;
-      const rows = await runQuery(sql);
-      const states = [];
-      const counts = [];
-      rows.forEach(r => {
-        states.push(r.f[0].v);
-        counts.push(Number(r.f[1].v));
-      });
-      Plotly.newPlot("seller-top-states", [{
-        type: "bar",
-        x: counts,
-        y: states,
-        orientation: "h",
-        marker: { color: CHART_COLORS.barPrimary }
-      }], darkLayout({
-        margin: { t: 18, l: 60, r: 10, b: 26 },
-        xaxis: { title: "Number of sellers" }
-      }), { responsive: true });
-    }
-
-    async function chartSellerBottomStates() {
-      const sql = `
-        SELECT
-          seller_state,
-          COUNT(*) AS sellers
-        FROM \`${PROJECT_ID}.${DATASET_DIM}.dim_db_sellers\`
-        GROUP BY seller_state
-        HAVING sellers > 0
-        ORDER BY sellers ASC
-        LIMIT 10
-      `;
-      const rows = await runQuery(sql);
-      const states = [];
-      const counts = [];
-      rows.forEach(r => {
-        states.push(r.f[0].v);
-        counts.push(Number(r.f[1].v));
-      });
-      Plotly.newPlot("seller-bottom-states", [{
-        type: "bar",
-        x: counts,
-        y: states,
-        orientation: "h",
-        marker: { color: CHART_COLORS.barMuted }
-      }], darkLayout({
-        margin: { t: 18, l: 60, r: 10, b: 26 },
-        xaxis: { title: "Number of sellers" }
-      }), { responsive: true });
-    }
-
-    async function chartSellerProductTypes() {
-      const sql = `
-        SELECT
-          COALESCE(product_category_name_english, product_category_name) AS category,
-          COUNT(*) AS items
-        FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\` f
-        JOIN \`${PROJECT_ID}.${DATASET_DIM}.dim_db_products\` p
-          ON f.product_id = p.product_id
-        GROUP BY category
-        ORDER BY items DESC
-        LIMIT 25
-      `;
-      const rows = await runQuery(sql);
-      const names = [];
-      const items = [];
-      rows.forEach(r => {
-        names.push(r.f[0].v || "Unknown");
-        items.push(Number(r.f[1].v));
-      });
-      Plotly.newPlot("seller-product-types", [{
-        type: "bar",
-        x: items,
-        y: names,
-        orientation: "h",
-        marker: { color: CHART_COLORS.barSecondary }
-      }], darkLayout({
-        margin: { t: 18, l: 150, r: 10, b: 26 },
-        xaxis: { title: "Order items" }
-      }), { responsive: true });
-    }
-
-    /********** 7. ORDER CHARTS & CATEGORY DETAIL **********/
-    async function chartOrderRevenueYear() {
-      const sql = `
-        SELECT
-          d.year AS year,
-          SUM(f.gross_order_item_value) AS revenue
-        FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\` f
-        JOIN \`${PROJECT_ID}.${DATASET_DIM}.dim_db_dates\` d
-          ON f.order_date_key = d.date_key
-        GROUP BY year
-        ORDER BY year
-      `;
-      const rows = await runQuery(sql);
-      const years = [];
-      const revenue = [];
-      rows.forEach(r => {
-        years.push(r.f[0].v);
-        revenue.push(Number(r.f[1].v));
-      });
-      Plotly.newPlot("order-revenue-year", [{
-        type: "scatter",
-        mode: "lines+markers",
-        x: years,
-        y: revenue,
-        line: { color: CHART_COLORS.revenue, width: 3 },
-        marker: { size: 6 }
-      }], darkLayout({
-        margin: { t: 18, l: 60, r: 10, b: 32 },
-        xaxis: { title: "Year" },
-        yaxis: { title: "Revenue (BRL)" }
-      }), { responsive: true });
-    }
-
-    async function chartOrderCategoryRevenue() {
-      const sql = `
-        SELECT
-          COALESCE(p.product_category_name_english, p.product_category_name) AS category,
-          SUM(f.gross_order_item_value) AS revenue
-        FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\` f
-        JOIN \`${PROJECT_ID}.${DATASET_DIM}.dim_db_products\` p
-          ON f.product_id = p.product_id
-        GROUP BY category
-        ORDER BY revenue DESC
-        LIMIT 10
-      `;
-      const rows = await runQuery(sql);
-      const categories = [];
-      const revenue = [];
-      rows.forEach(r => {
-        categories.push(r.f[0].v || "Unknown");
-        revenue.push(Number(r.f[1].v));
-      });
-
-      const divId = "order-category-revenue";
-
-      Plotly.newPlot(divId, [{
-        type: "bar",
-        x: revenue,
-        y: categories,
-        orientation: "h",
-        marker: { color: CHART_COLORS.category }
-      }], darkLayout({
-        margin: { t: 18, l: 150, r: 10, b: 26 },
-        xaxis: { title: "Revenue (BRL)" }
-      }), { responsive: true });
-
-      // click to show category detail
-      const chartDiv = document.getElementById(divId);
-      chartDiv.on("plotly_click", (data) => {
-        if (!data || !data.points || !data.points.length) return;
-        const category = data.points[0].y;
-        setStatus(`Loading detail for category "${category}"…`);
-        renderCategoryDetail(category)
-          .then(() => setStatus(`Dashboards ready. Category: ${category}.`))
-          .catch(err => {
-            console.error(err);
-            setStatus("Error loading category detail.", true);
-          });
-      });
-    }
-
-    // Category detail: revenue by year + share of total
-    async function renderCategoryDetail(category) {
-      const panel = document.getElementById("order-category-detail");
-      const safeCategory = category.replace("'", "\\'");
-
-      const sql = `
-        WITH cat AS (
-          SELECT
-            d.year,
-            SUM(f.gross_order_item_value) AS revenue
-          FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\` f
-          JOIN \`${PROJECT_ID}.${DATASET_DIM}.dim_db_products\` p
-            ON f.product_id = p.product_id
-          JOIN \`${PROJECT_ID}.${DATASET_DIM}.dim_db_dates\` d
-            ON f.order_date_key = d.date_key
-          WHERE COALESCE(p.product_category_name_english, p.product_category_name) = '${safeCategory}'
-          GROUP BY year
-        ),
-        total AS (
-          SELECT
-            d.year,
-            SUM(f.gross_order_item_value) AS revenue
-          FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\` f
-          JOIN \`${PROJECT_ID}.${DATASET_DIM}.dim_db_dates\` d
-            ON f.order_date_key = d.date_key
-          GROUP BY year
-        )
-        SELECT
-          t.year,
-          c.revenue AS cat_revenue,
-          t.revenue AS total_revenue
-        FROM total t
-        LEFT JOIN cat c
-          ON c.year = t.year
-        ORDER BY year
-      `;
-      const rows = await runQuery(sql);
-      if (!rows.length) {
-        panel.innerHTML = `<p>No data for category <strong>${category}</strong>.</p>`;
-        return;
-      }
-
-      let html = `<p style="margin-top:0;">Category: <strong style="color:var(--accent-warm);">${category}</strong></p>`;
-      html += `<table style="width:100%;border-collapse:collapse;font-size:11px;">
-        <thead>
-          <tr>
-            <th style="text-align:left;border-bottom:1px solid #374151;padding:4px;">Year</th>
-            <th style="text-align:right;border-bottom:1px solid #374151;padding:4px;">Category Revenue</th>
-            <th style="text-align:right;border-bottom:1px solid #374151;padding:4px;">Share of Total</th>
-          </tr>
-        </thead>
-        <tbody>`;
-
-      rows.forEach(r => {
-        const year   = r.f[0].v;
-        const catRev = Number(r.f[1].v || 0);
-        const totRev = Number(r.f[2].v || 0);
-        const share  = totRev ? (catRev / totRev) * 100 : 0;
-        html += `<tr>
-          <td style="padding:4px;">${year}</td>
-          <td style="padding:4px;text-align:right;">R$ ${catRev.toLocaleString(undefined,{maximumFractionDigits:0})}</td>
-          <td style="padding:4px;text-align:right;">${share.toFixed(1)}%</td>
-        </tr>`;
-      });
-
-      html += `</tbody></table>
-        <p style="margin-top:6px;">
-          Tip: click another bar in <em>Top Categories by Revenue</em> to compare segments.
-        </p>`;
-
-      panel.innerHTML = html;
-    }
-
-    async function chartOrdersYearMonth() {
-      const sql = `
-        SELECT
-          d.year_month,
-          COUNT(DISTINCT f.order_id) AS orders
-        FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\` f
-        JOIN \`${PROJECT_ID}.${DATASET_DIM}.dim_db_dates\` d
-          ON f.order_date_key = d.date_key
-        GROUP BY year_month
-        ORDER BY year_month
-      `;
-      const rows = await runQuery(sql);
-      const ym = [];
-      const counts = [];
-      rows.forEach(r => {
-        ym.push(r.f[0].v);
-        counts.push(Number(r.f[1].v));
-      });
-      Plotly.newPlot("order-orders-yearmonth", [{
-        type: "scatter",
-        mode: "lines+markers",
-        x: ym,
-        y: counts,
-        line: { color: CHART_COLORS.barSecondary, width: 2 },
-        marker: { size: 5 }
-      }], darkLayout({
-        margin: { t: 18, l: 60, r: 10, b: 60 },
-        xaxis: { title: "Year-Month", tickangle: -35 },
-        yaxis: { title: "Distinct orders" }
-      }), { responsive: true });
-    }
-
-    async function chartTopSellersByRevenue() {
-      const sql = `
-        SELECT
-          seller_id,
-          SUM(gross_order_item_value) AS revenue
-        FROM \`${PROJECT_ID}.${DATASET_FACT}.fact_db_order_items\`
-        GROUP BY seller_id
-        ORDER BY revenue DESC
-        LIMIT 25
-      `;
-      const rows = await runQuery(sql);
-      const sellers = [];
-      const revenue = [];
-      rows.forEach(r => {
-        const seller = r.f[0].v || "";
-        sellers.push(seller.substring(0, 8) + "…");
-        revenue.push(Number(r.f[1].v));
-      });
-      Plotly.newPlot("order-seller-revenue", [{
-        type: "bar",
-        x: revenue,
-        y: sellers,
-        orientation: "h",
-        marker: { color: CHART_COLORS.line }
-      }], darkLayout({
-        margin: { t: 18, l: 80, r: 10, b: 26 },
-        xaxis: { title: "Revenue (BRL)" }
-      }), { responsive: true });
-    }
-
-    /********** 8. RENDER ALL **********/
-    async function renderAllCharts() {
-      setStatus("Running BigQuery SQL & rendering charts…");
-
-      await Promise.all([
-        loadCustomerKPIs(),
-        loadSellerKPIs(),
-        loadOrderKPIs(),
-
-        chartCustomersByYear(),
-        chartCustomerRevenueByState(),
-        chartCustomerTopStates(),
-        chartCustomerBottomStates(),
-        chartCustomerMap(),
-
-        chartSellerFreightByYear(),
-        chartSellerRevenueByYear(),
-        chartSellerTopStates(),
-        chartSellerBottomStates(),
-        chartSellerProductTypes(),
-
-        chartOrderRevenueYear(),
-        chartOrderCategoryRevenue(),
-        chartOrdersYearMonth(),
-        chartTopSellersByRevenue()
-      ]);
-
-      setStatus("Dashboards ready. Use the tabs to switch views. Click bars & bubbles to see details.");
-    }
-
-    /********** 9. AUTH & INIT **********/
-    function gisLoaded() {
-      tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: CLIENT_ID,
-        scope: SCOPES,
-        callback: () => {}
-      });
-      gisInited = true;
-      maybeEnableSignin();
-    }
-
-    function gapiLoaded() {
-      gapi.load("client", async () => {
-        try {
-          await gapi.client.init({
-            apiKey: API_KEY,
-            discoveryDocs: DISCOVERY_DOCS
-          });
-          gapiInited = true;
-          maybeEnableSignin();
-        } catch (err) {
-          console.error("Init error:", err);
-          setStatus("Error initializing Google client. Check API key / client ID.", true);
-        }
-      });
-    }
-
-    window.addEventListener("load", () => {
-      if (typeof gapi !== "undefined") {
-        gapiLoaded();
-      } else {
-        setStatus("Failed to load Google API JS.", true);
-      }
-
-      const signInBtn  = document.getElementById("signin-button");
-      const signOutBtn = document.getElementById("signout-button");
-
-      signInBtn.onclick = () => {
-        if (!tokenClient) {
-          setStatus("Auth client not ready yet. Please wait a moment and try again.", true);
+      tokenClient.callback = (resp) => {
+        if (resp.error) {
+          console.error(resp);
+          setStatus("Error getting access token.", true);
           return;
         }
-        tokenClient.callback = (resp) => {
-          if (resp.error) {
-            console.error(resp);
-            setStatus("Error getting access token.", true);
-            return;
-          }
-          signInBtn.style.display  = "none";
-          signOutBtn.style.display = "inline-block";
-          setStatus("Signed in. Loading dashboards…");
-          renderAllCharts().catch(err => {
-            console.error("Query error:", err);
-            setStatus("Error running queries. Open browser console for details.", true);
-          });
-        };
-        tokenClient.requestAccessToken({ prompt: "consent" });
-      };
-
-      signOutBtn.onclick = () => {
-        const token = gapi.client.getToken();
-        if (token && token.access_token) {
-          google.accounts.oauth2.revoke(token.access_token, () => {
-            gapi.client.setToken(null);
-            signOutBtn.style.display = "none";
-            signInBtn.style.display  = "inline-block";
-            setStatus("Signed out. Sign in again to reload dashboards.");
-          });
-        }
-      };
-
-      // Tab switching
-      document.querySelectorAll(".tab-button").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const tab = btn.getAttribute("data-tab");
-          document.querySelectorAll(".tab-button").forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-          document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-          document.getElementById("page-" + tab).classList.add("active");
+        signInBtn.style.display = "none";
+        signOutBtn.style.display = "inline-block";
+        setStatus("Signed in. Loading dashboards…");
+        renderAll().catch(err => {
+          console.error("Query error:", err);
+          setStatus("Error running queries. Open browser console for details.", true);
         });
+      };
+      tokenClient.requestAccessToken({ prompt: "consent" });
+    };
+
+    signOutBtn.onclick = () => {
+      const token = gapi.client.getToken();
+      if (token && token.access_token) {
+        google.accounts.oauth2.revoke(token.access_token, () => {
+          gapi.client.setToken(null);
+          signOutBtn.style.display = "none";
+          signInBtn.style.display = "inline-block";
+          setStatus("Signed out. Sign in again to reload dashboards.");
+        });
+      }
+    };
+
+    document.querySelectorAll(".tab-button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const tab = btn.getAttribute("data-tab");
+        document.querySelectorAll(".tab-button").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+        document.getElementById("page-" + tab).classList.add("active");
       });
     });
-  </script>
+
+    document.querySelectorAll(".year-button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".year-button").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        const yearAttr = btn.getAttribute("data-year");
+        currentYear = (yearAttr === "all") ? null : parseInt(yearAttr, 10);
+        if (gapiInited && gisInited && gapi.client.getToken()) {
+          renderAll().catch(err => {
+            console.error("Query error:", err);
+            setStatus("Error running queries for selected year.", true);
+          });
+        }
+      });
+    });
+  });
+</script>
 </body>
 </html>
