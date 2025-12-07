@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Google Identity Services (OAuth) -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
   <meta charset="UTF-8" />
   <title>Brazilian E-Commerce Analytics – BigQuery Live Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Google API JS (for BigQuery) -->
+  <!-- Google API JS (BigQuery) -->
   <script src="https://apis.google.com/js/api.js"></script>
-  <!-- Google Identity Services -->
-  <script src="https://accounts.google.com/gsi/client" async defer onload="gisLoaded()"></script>
 
   <!-- Plotly -->
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
@@ -610,7 +611,7 @@
     const API_KEY    = "AIzaSyDb4uWxi5LWSQXzFvf87cJtonj6zMzNCks";
     const PROJECT_ID = "durable-ripsaw-477914-g0";
 
-    // NEW: use separate datasets
+    // separate datasets
     const DIM_DATASET  = "ecommerce_dim";   // all dim_db_* tables
     const FACT_DATASET = "ecommerce_fact";  // fact_db_order_items
 
@@ -676,7 +677,7 @@
       const r = rows[0];
       document.getElementById("kpi-cust-count").textContent   = Number(val(r,0)).toLocaleString("en-US");
       document.getElementById("kpi-cust-orders").textContent  = Number(val(r,1)).toLocaleString("en-US");
-      document.getElementById("kpi-cust-states").textContent  = "27"; // Brazil states
+      document.getElementById("kpi-cust-states").textContent  = "27";
       document.getElementById("kpi-cust-revenue").textContent = "R$ " + Number(val(r,3)).toLocaleString("en-US", {maximumFractionDigits:0});
     }
 
@@ -1311,111 +1312,4 @@
 
     function maybeEnableSignin() {
       if (gapiInited && gisInited) {
-        const btn = document.getElementById("signin-button");
-        btn.disabled = false;
-        setStatus("Google client ready. Sign in to load live metrics.");
-      }
-    }
-
-    window.addEventListener("load", () => {
-      if (typeof gapi !== "undefined") {
-        gapiLoaded();
-      } else {
-        setStatus("Failed to load Google API JS.", true);
-      }
-
-      const signInBtn  = document.getElementById("signin-button");
-      const signOutBtn = document.getElementById("signout-button");
-
-      signInBtn.onclick = () => {
-        if (!tokenClient) {
-          setStatus("Auth client not ready yet. Try again in a few seconds.", true);
-          return;
-        }
-        tokenClient.callback = (resp) => {
-          if (resp.error) {
-            console.error(resp);
-            const msg =
-              resp?.error_description ||
-              resp?.error ||
-              "Error getting access token.";
-            setStatus(msg, true);
-            return;
-          }
-          signInBtn.style.display  = "none";
-          signOutBtn.style.display = "inline-flex";
-          setStatus("Signed in. Running BigQuery queries…");
-          renderCurrentDashboard().catch(err => {
-            console.error("Query error:", err);
-            const msg =
-              err?.result?.error?.message ||
-              err?.message ||
-              "Error running queries for selected year.";
-            setStatus(msg, true);
-          });
-        };
-        tokenClient.requestAccessToken({ prompt: "consent" });
-      };
-
-      signOutBtn.onclick = () => {
-        const token = gapi.client.getToken();
-        if (token && token.access_token) {
-          google.accounts.oauth2.revoke(token.access_token, () => {
-            gapi.client.setToken(null);
-            signOutBtn.style.display = "none";
-            signInBtn.style.display  = "inline-flex";
-            setStatus("Signed out. Sign in again to refresh the dashboard.");
-          });
-        }
-      };
-
-      // Tab switching
-      document.querySelectorAll(".tab-pill").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const tab = btn.dataset.tab;
-          currentTab = tab;
-
-          document.querySelectorAll(".tab-pill").forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-
-          document.querySelectorAll(".dashboard").forEach(d => d.classList.remove("active"));
-          document.getElementById(`dashboard-${tab}`).classList.add("active");
-
-          if (gapi.client && gapi.client.getToken()) {
-            setStatus(`Loading ${tab} dashboard…`);
-            renderCurrentDashboard().catch(err => {
-              console.error("Query error:", err);
-              const msg =
-                err?.result?.error?.message ||
-                err?.message ||
-                "Error running queries for selected year.";
-              setStatus(msg, true);
-            });
-          }
-        });
-      });
-
-      // Year slicer
-      document.querySelectorAll(".year-pill").forEach(btn => {
-        btn.addEventListener("click", () => {
-          selectedYear = btn.dataset.year;
-          document.querySelectorAll(".year-pill").forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-
-          if (gapi.client && gapi.client.getToken()) {
-            setStatus(`Reloading charts for year: ${selectedYear === "ALL" ? "All" : selectedYear}…`);
-            renderCurrentDashboard().catch(err => {
-              console.error("Query error:", err);
-              const msg =
-                err?.result?.error?.message ||
-                err?.message ||
-                "Error running queries for selected year.";
-              setStatus(msg, true);
-            });
-          }
-        });
-      });
-    });
-  </script>
-</body>
-</html>
+        const btn
