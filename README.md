@@ -260,4 +260,322 @@ Run Dashboard
 cd /home/pingh/Brazilian-E-Commerce-Public-Dataset-by-Olist/dashboard
 explorer.exe olist_ml_business_dashboard.html
 
+# dbt Pipeline Guide — Brazilian E-Commerce (Olist)
+
+This README explains **only the dbt process step by step** for building a **star schema** in BigQuery using the Olist Brazilian E‑Commerce dataset.
+
+All transformations happen inside the **`ecommerce`** BigQuery dataset.
+
+---
+
+## 1. Prerequisites
+
+- Python environment with `dbt-bigquery` installed (you use `eltn`):
+  
+```bash
+conda activate eltn
+pip install dbt-bigquery
+```
+
+- Raw Olist tables already in BigQuery (loaded by Meltano or other EL tool):
+
+Typical tables in dataset **`ecommerce`**:
+
+- `olist_orders`
+- `olist_order_items`
+- `olist_customers`
+- `olist_order_payments`
+- `olist_order_reviews`
+- `olist_products`
+- `olist_sellers`
+- `olist_geolocation`
+- `product_category_name_translation`
+
+---
+
+## 2. dbt Project Location & Structure
+
+The dbt project folder is:
+
+```bash
+~/Brazilian-E-Commerce-Public-Dataset-by-Olist/dbt_edits_star_db_fixed
+```
+
+Inside it you should see:
+
+```text
+dbt_edits_star_db_fixed/
+├── dbt_project.yml
+├── profiles.yml            # project-specific dbt profile
+├── staging/                # staging models: stg_db_*.sql
+│   └── sources.yml         # BigQuery sources
+└── marts/
+    ├── dim/                # dimension models: dim_db_*.sql
+    └── fact/               # fact models: fact_db_*.sql
+```
+
+All dbt commands must be run **inside this folder**.
+
+---
+
+## 3. Configure dbt to Use BigQuery `ecommerce` Dataset
+
+### 3.1. `profiles.yml`
+
+In `dbt_edits_star_db_fixed/profiles.yml`:
+
+```yaml
+dbt_olist:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: oauth
+      project: "durable-ripsaw-477914-g0"
+      dataset: "ecommerce"       # ⭐ all models go to this dataset
+      location: US
+      threads: 4
+      priority: interactive
+      retries: 1
+```
+
+### 3.2. `dbt_project.yml`
+
+In `dbt_edits_star_db_fixed/dbt_project.yml`:
+
+```yaml
+name: dbt_edits_star_db
+version: 1.0.0
+config-version: 2
+
+profile: dbt_olist
+
+model-paths: ["staging", "marts"]
+
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  dbt_edits_star_db:
+
+    # Uses dataset = ecommerce from profiles.yml
+
+    staging:
+      +materialized: view      # stg_db_* are views
+
+    marts:
+      dim:
+        +materialized: table   # dim_db_* are tables
+      fact:
+        +materialized: table   # fact_db_* are tables
+```
+
+This setup gives you a **classic star schema**:
+
+```text
+          dim_db_customers
+                 ↑
+                 |
+dim_db_products ← fact_db_order_items → dim_db_sellers
+                 |
+                 ↓
+            dim_db_dates
+```
+
+All of these live in **BigQuery dataset: `ecommerce`**.
+
+---
+
+## 4. Step-by-Step: Running dbt
+
+### 4.1. Step 1 — Activate Environment & Go to dbt Folder
+
+```bash
+conda activate eltn
+
+cd ~/Brazilian-E-Commerce-Public-Dataset-by-Olist/dbt_edits_star_db_fixed
+```
+
+### 4.2. Step 2 — Check Configuration
+
+```bash
+dbt debug
+```
+
+You should see:
+
+- `profiles.yml file [OK found and valid]`
+- `dbt_project.yml file [OK found and valid]`
+- `Connection test: [OK connection ok]`
+
+> ⚠ If you see  
+> `No dbt_project.yml found at expected path /home/.../Brazilian-E-Commerce-Public-Dataset-by-Olist/dbt_project.yml`  
+> you are in the **wrong folder**. Make sure you are inside `dbt_edits_star_db_fixed/`.
+
+### 4.3. Step 3 — Install dbt Packages (If Any)
+
+```bash
+dbt deps
+```
+
+### 4.4. Step 4 — List All dbt Nodes (Models & Sources)
+
+```bash
+dbt ls
+```
+
+You should see entries like:
+
+```text
+dbt_edits_star_db.stg_db_customers
+dbt_edits_star_db.stg_db_orders
+dbt_edits_star_db.stg_db_order_items
+dbt_edits_star_db.dim.dim_db_customers
+dbt_edits_star_db.dim.dim_db_products
+dbt_edits_star_db.dim.dim_db_sellers
+dbt_edits_star_db.dim.dim_db_dates
+dbt_edits_star_db.fact.fact_db_order_items
+source:dbt_edits_star_db.olist_raw.olist_orders
+...
+```
+
+This confirms dbt can see all models and sources correctly.
+
+---
+
+## 5. Running Staging Models Only (Optional)
+
+If you want to materialize only the **staging views** first:
+
+```bash
+dbt run --select stg_db_*
+```
+
+This will create views in BigQuery:
+
+- `ecommerce.stg_db_customers`
+- `ecommerce.stg_db_orders`
+- `ecommerce.stg_db_order_items`
+- `ecommerce.stg_db_order_payments`
+- `ecommerce.stg_db_products`
+- `ecommerce.stg_db_sellers`
+- `ecommerce.stg_db_product_category_name_translation`
+
+These staging models usually:
+
+- Clean column names  
+- Cast data types  
+- Standardize timestamps, currencies, etc.
+
+---
+
+## 6. Running Dimension & Fact Models
+
+### 6.1. Run Only Dimension Tables
+
+```bash
+dbt run --select dim_db_*
+```
+
+Creates dimension tables in `ecommerce`:
+
+- `dim_db_customers`
+- `dim_db_products`
+- `dim_db_sellers`
+- `dim_db_dates`
+
+### 6.2. Run Only Fact Tables
+
+```bash
+dbt run --select fact_db_*
+```
+
+Creates fact tables such as:
+
+- `fact_db_order_items`
+
+### 6.3. Run Everything (Staging + Dim + Fact)
+
+```bash
+dbt run
+```
+
+or better:
+
+```bash
+dbt build
+```
+
+`dbt build` will:
+
+- Run all models (staging, dim, fact)  
+- Run all configured tests for those models
+
+---
+
+## 7. Running dbt Tests
+
+Tests are usually defined in `schema.yml` files next to your models and include:
+
+- `not_null` tests on primary keys and foreign keys  
+- `unique` tests on natural keys (e.g., `order_id`, `customer_id`)  
+
+### 7.1. Run Tests for All Models
+
+```bash
+dbt test
+```
+
+### 7.2. Run Tests Only for Dim & Fact Models
+
+```bash
+dbt test --select dim_db_* fact_db_*
+```
+
+You should see a summary such as:
+
+```text
+PASS=XX WARN=0 ERROR=0 SKIP=0
+```
+
+If there are failures, dbt will show which column/model failed which test.
+
+---
+
+## 8. Typical One-Command Workflow
+
+From a fresh shell:
+
+```bash
+conda activate eltn
+cd ~/Brazilian-E-Commerce-Public-Dataset-by-Olist/dbt_edits_star_db_fixed
+
+dbt debug       # check profile & connection
+dbt deps        # install dependencies
+dbt build       # run models + tests (staging + dim + fact)
+```
+
+After `dbt build` finishes successfully, you will have:
+
+- A validated **star schema** in BigQuery dataset `ecommerce`  
+- Ready-to-use tables for BI dashboards, ML, and further analysis.
+
+---
+
+## 9. What to Expect in BigQuery After dbt
+
+Final curated tables (all in dataset **`ecommerce`**):
+
+- **Dimensions**
+  - `dim_db_customers`
+  - `dim_db_products`
+  - `dim_db_sellers`
+  - `dim_db_dates`
+
+- **Fact**
+  - `fact_db_order_items`
+
+These tables form the backbone of your analytics and machine learning workflows.
+
+
 
