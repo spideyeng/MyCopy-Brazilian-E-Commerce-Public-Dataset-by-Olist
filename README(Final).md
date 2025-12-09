@@ -9,9 +9,8 @@ Pipeline: Kaggle → CSV → Meltano → BigQuery → dbt (Staging/Dim/Fact) →
 
 ## 2. Repository Structure
 project_root/
-- data/
-- meltano/
-- dbt_edits_star_db_fixed/
+- meltano_kaggle_csv/
+- Dbt_Final/
 - GX/
 - dagster_pipeline/
 - ml/
@@ -24,19 +23,18 @@ git clone https://github.com/pinghar/Brazilian-E-Commerce-Public-Dataset-by-Olis
 cd Brazilian-E-Commerce-Public-Dataset-by-Olist
 
 Create environment:
-conda create -n eltn python=3.10 -y
+conda create -n eltn
 conda activate eltn
-pip install -r requirements.txt
 
 ## 4. Configure .env
-KAGGLE_USERNAME=xxxx
-KAGGLE_KEY=xxxx
-GCP_PROJECT_ID=durable-ripsaw-477914-g0
-GOOGLE_APPLICATION_CREDENTIALS=/ABSOLUTE/PATH/bq-key.json
+KAGGLE_USERNAME=your_kaggle_username
+KAGGLE_KEY=your_kaggle_api_key
+GCP_PROJECT_ID=your_gcp_project_id
+GOOGLE_APPLICATION_CREDENTIALS=/full/path/to/your-service-account.json
 BQ_DATASET=ecommerce
 BQ_LOCATION=US
-GOOGLE_CLIENT_ID=xxxx
-GOOGLE_API_KEY=xxxx
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_API_KEY=your_google_api_key
 
 ## 5. .gitignore
 .env
@@ -52,10 +50,28 @@ python download_kaggle.py
 meltano run tap-csv target-bigquery
 
 ## 7. dbt – Staging, Star Schema & Tests
-dbt run --select staging --project-dir dbt_edits_star_db_fixed
-dbt test --select staging --project-dir dbt_edits_star_db_fixed
-dbt run --select marts --project-dir dbt_edits_star_db_fixed
-dbt test --select marts --project-dir dbt_edits_star_db_fixed
+cd ./Dbt_Final/
+
+# 1. Connection Check
+dbt debug
+
+# 2. Install Packages
+dbt deps
+
+# 3. Staging Layer
+dbt run  --select stg_db_*
+dbt test --select stg_db_*
+
+# 4. Dimension Layer
+dbt run  --select dim_db_*
+dbt test --select dim_db_*
+
+# 5. Fact Layer
+dbt run  --select fact_db_*
+dbt test --select fact_db_*
+
+# 6. Or ALL-IN-ONE
+dbt build --full-refresh
 
 ## 8. Great Expectations
 python GX/GX_Validation_Report.py
