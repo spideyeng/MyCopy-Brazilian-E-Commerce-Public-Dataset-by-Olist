@@ -67,7 +67,7 @@ plugins:
       flattening_enabled: true
       flattening_max_depth: 1
       upsert: false
-      overwrite: false
+      overwrite: true
       dedupe_before_upsert: false
 
 
