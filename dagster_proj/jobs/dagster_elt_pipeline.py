@@ -32,7 +32,7 @@ def run_meltano_elt(context: OpExecutionContext) -> str:
 def run_dbt_stg_models(context: OpExecutionContext):
 
     context.log.info("🛠️ [dbt] Building staging models...")
-    shell_command = "cd ../Dbt_Final/; python dbt_run_stg.py"
+    shell_command = "cd Dbt_Final/; python dbt_run_stg.py"
     result = subprocess.run(
             shell_command,
             shell=True,
@@ -51,7 +51,7 @@ def run_dbt_stg_models(context: OpExecutionContext):
 def run_dbt_stg_tests(context: OpExecutionContext) -> str:
 
     #context.log.info(f"Trigger received: {start_signal}")
-    shell_command = "cd ../Dbt_Final/; python dbt_test_stg.py"
+    shell_command = "cd Dbt_Final/; python dbt_test_stg.py"
     result = subprocess.run(
             shell_command,
             shell=True,
@@ -72,7 +72,7 @@ def run_dbt_dim_fact_models(context: OpExecutionContext) -> str:
 
     #context.log.info(f"Trigger received: {start_signal}")
     context.log.info("🛠️ [dbt] Building Dim & Fact models...")
-    shell_command = "cd ../Dbt_Final/; python dbt_run_fact.py"
+    shell_command = "cd Dbt_Final/; python dbt_run_fact.py"
     result = subprocess.run(
             shell_command,
             shell=True,
@@ -84,7 +84,7 @@ def run_dbt_dim_fact_models(context: OpExecutionContext) -> str:
     for line in result.stdout.splitlines():
         context.log.info(line)
     
-    shell_command = "cd ../Dbt_Final/; python dbt_run_dim.py"
+    shell_command = "cd Dbt_Final/; python dbt_run_dim.py"
     result = subprocess.run(
             shell_command,
             shell=True,
@@ -105,7 +105,7 @@ def run_dbt_dim_fact_tests(context: OpExecutionContext) -> str:
     #context.log.info(f"Trigger received: {start_signal}")
     context.log.info("🛠️ [dbt] Running schema tests on Dim & Fact tables...")
     
-    shell_command = "cd ../Dbt_Final/; python dbt_test_fact.py"
+    shell_command = "cd Dbt_Final/; python dbt_test_fact.py"
     
     result = subprocess.run(
             shell_command,
@@ -120,7 +120,7 @@ def run_dbt_dim_fact_tests(context: OpExecutionContext) -> str:
         context.log.info(line)
     
     
-    shell_command = "cd ../Dbt_Final/; python dbt_test_dim.py"
+    shell_command = "cd Dbt_Final/; python dbt_test_dim.py"
     result = subprocess.run(
             shell_command,
             shell=True,
@@ -150,7 +150,7 @@ def run_gx_validation(context: OpExecutionContext):
     context.log.info("🔍 [GX] Running checkpoint 'Data quality Validation'...")
     #os.system("python  ../GX/GX_Validation_Report.py")
     
-    shell_command = "python  ../GX/GX_Validation_Report.py"
+    shell_command = "python  GX/GX_Validation_Report.py"
     result = subprocess.run(
             shell_command,
             shell=True,
@@ -170,9 +170,9 @@ def generate_eda_report(context: OpExecutionContext):
     """Simulates generating an EDA report."""
     context.log.info("📊 [EDA] Analyzing data distributions...")
     #time.sleep(1)
-    os.system("python  ../EDA_ML/EDA_ML.py")
+    #os.system("python  EDA_ML/EDA_ML.py")
 
-    shell_command = "python  ../EDA_ML/EDA_ML.py"
+    shell_command = "python  EDA_ML/EDA_ML.py"
     result = subprocess.run(
             shell_command,
             shell=True,

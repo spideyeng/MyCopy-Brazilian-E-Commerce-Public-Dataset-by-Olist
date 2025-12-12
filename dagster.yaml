@@ -1,5 +1,0 @@
-# dagster.yaml
-code_servers:
-  - location_name: "GROUPPROJECT_BRAZILIAN-E-COMMERCE-PUBLIC-DATASET-BY-OLIST"
-    code_source:
-      package_name: "dagster" # Points to the top-level 'dagster' directory
