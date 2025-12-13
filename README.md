@@ -85,7 +85,8 @@ python ml/EDA_ML_Analysis.py
 [View Live Dashboard](https://pinghar.github.io/Brazilian-E-Commerce-Public-Dataset-by-Olist/).
 
 ## 11. Dagster Orchestration
-dagster dev → open http://localhost:3000 to run full pipeline.
+cd dagster/
+dagster dev -m dagster_proj.definitions → open http://localhost:3000 to run full pipeline.
 
 ## 12. Architecture Overview
 Kaggle → Meltano → BigQuery → dbt → GX → ML → Dashboard → Dagster

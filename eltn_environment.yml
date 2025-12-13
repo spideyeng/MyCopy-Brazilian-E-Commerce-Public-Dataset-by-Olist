@@ -6,15 +6,43 @@ channels:
   - defaults
   - https://repo.anaconda.com/pkgs/main
 dependencies:
+  - pip=25.1
+  # Core Data Science Libraries
+  - python=3.10.18
+  - pandas=2.1.4
+  - numpy
+  # Data Visualization (These bring in the underlying Qt dependency)
+  - matplotlib=3.10.0
+  - seaborn
+  - qt
+  # Google Cloud / BigQuery
+  - google-cloud-bigquery-storage
+  - pandas-gbq
+  # dbt
   - dbt-bigquery=1.9.1
   - dbt-core=1.9.6
-  - matplotlib=3.10.0
-  - pandas=2.1.4
-  - pip=25.1
-  - python=3.10.18
-  - requests=2.32.3
+  # Machine Learning
+  - scikit-learn=1.3.2
+  - xgboost
   # GX Core 1.x
-  - great-expectations==1.9.1  # latest 1.x release (stable)
-
+  - great-expectations==1.9.1  # latest 1.x release (stable)  
+  # Machine Learning
+  - scikit-learn
+  - xgboost  
+  - requests=2.32.3
   - pip:
       - meltano==3.7.8
+      - sqlalchemy-bigquery
+      - dagster==1.9.13
+      - dagster-dbt==0.25.13
+      - dagster-duckdb==0.25.13
+      - dagster-duckdb-pandas==0.25.13
+      - dagster-meltano==1.5.5
+      - dagster-webserver==1.9.13
+      - python-dotenv==1.1.0
+
+variables:
+  # This sets the QT_QPA_PLATFORM variable inside the Conda environment.
+  # It forces Qt applications to use the X11 backend (xcb), which is
+  # automatically handled by XWayland on a Wayland desktop, preventing the error.
+  QT_QPA_PLATFORM: xcb

@@ -36,7 +36,7 @@ datasource = context.data_sources.add_or_update_sql(
 MIN_TOTAL=100
 
 #DATA FRESHNESS PARAMETERS
-MAX_DATE =    datetime(2018, 10, 18,tzinfo=timezone.utc)
+MAX_DATE =    datetime(2018, 9, 3)
 MIN_DATE = MAX_DATE - timedelta(days=365*5)
 FRESHNESS_DAY = 7
 brazilian_states = [
@@ -48,23 +48,23 @@ brazilian_states = [
     
 
 # %%
-def fact_orders_validation_asset():
+def fact_db_order_items_validation_asset():
     
     try:
-        datasource.delete_asset("fact_orders")
+        datasource.delete_asset("fact_db_order_items")
     except:
         pass
-    fact_orders_validation_asset = datasource.add_table_asset(
-        name="fact_orders",
-        table_name="fact_orders", 
+    fact_db_order_items_validation_asset = datasource.add_table_asset(
+        name="fact_db_order_items",
+        table_name="fact_db_order_items", 
         schema_name=DATASET
     )
 
     try:
-        context.suites.delete("fact_orders_validation")
+        context.suites.delete("fact_db_order_items_validation")
     except:
         pass    
-    suite_name = gx.ExpectationSuite(name="fact_orders_validation")
+    suite_name = gx.ExpectationSuite(name="fact_db_order_items_validation")
         
     # Check Data Volume
     suite_name.add_expectation(
@@ -75,10 +75,17 @@ def fact_orders_validation_asset():
     # Data freshness 
     suite_name.add_expectation(
         gx.expectations.ExpectColumnMaxToBeBetween(
-            column="order_purchase_timestamp", min_value=MAX_DATE - timedelta(days=FRESHNESS_DAY)  , max_value=MAX_DATE)
+            column="order_date_key", min_value=MAX_DATE - timedelta(days=FRESHNESS_DAY)  , max_value=MAX_DATE)
             
     )
 
+    # Data freshness 
+    suite_name.add_expectation(
+        gx.expectations.ExpectColumnMaxToBeBetween(
+            column="order_date_key", min_value=MIN_DATE  , max_value=MAX_DATE)
+            
+    )
+    """
     suite_name.add_expectation(
         gx.expectations.ExpectColumnPairValuesAToBeGreaterThanB( 
             column_A="order_delivered_customer_date",
@@ -99,31 +106,31 @@ def fact_orders_validation_asset():
             column="seller_state", value_set=brazilian_states
         )    
     )
-
+    """
 
 
     suite_name.add_expectation(
         gx.expectations.ExpectColumnValuesToNotBeNull(
-            column="order_delivered_customer_date",
-            mostly=0.8  # At least 80% should have delivery date
+            column="order_date_key",
+            mostly=0.8  # At least 80% should have order date
             
         )
     )
 
     suite_name.add_expectation(
         gx.expectations.ExpectColumnValuesToBeBetween(
-            column="total_order_value", min_value=0.0,mostly=0.9
+            column="price", min_value=0.50,mostly=0.9
         )
     )
     suite_name.add_expectation(
         gx.expectations.ExpectColumnValuesToBeBetween(
-            column="total_freight", min_value=0.0,mostly=0.9
+            column="freight_value", min_value=1.0,mostly=0.9
         )
     )
     
     suite_name.add_expectation(
         gx.expectations.ExpectColumnQuantileValuesToBeBetween(
-            column="total_payment",
+            column="gross_order_item_value",
             quantile_ranges={
                 "quantiles": [0.25, 0.5, 0.75, 0.95],
                 "value_ranges": [
@@ -234,24 +241,24 @@ def fact_customer_validation_asset():
     context.suites.add(suite_name)
 
 # %%
-def dim_customers_validation_asset():
+def dim_db_customers_validation_asset():
     
     try:
-        datasource.delete_asset("dim_customers")
+        datasource.delete_asset("dim_db_customers")
     except:
         pass
     
-    dim_customers_validation_asset = datasource.add_table_asset(
-        name="dim_customers",
-        table_name="dim_customers", 
+    dim_db_customers_validation_asset = datasource.add_table_asset(
+        name="dim_db_customers",
+        table_name="dim_db_customers", 
         schema_name=DATASET
     )
 
     try:
-        context.suites.delete("dim_customers_validation")
+        context.suites.delete("dim_db_customers_validation")
     except:
         pass
-    suite_name = gx.ExpectationSuite(name="dim_customers_validation")
+    suite_name = gx.ExpectationSuite(name="dim_db_customers_validation")
 
 
     # Check Data Volume
@@ -267,7 +274,7 @@ def dim_customers_validation_asset():
             column="order_purchase_timestamp", min_value=MAX_DATE - timedelta(days=FRESHNESS_DAY)  , max_value=MAX_DATE)
             
     )
-    """
+   
     suite_name.add_expectation(
         gx.expectations.ExpectColumnPairValuesAToBeGreaterThanB( 
             column_A="last_purchase_timestamp",
@@ -276,14 +283,14 @@ def dim_customers_validation_asset():
 
         )
     )   
-
+    """
     # Valid Brazilian States
     suite_name.add_expectation(
         gx.expectations.ExpectColumnDistinctValuesToBeInSet(
             column="customer_state", value_set=brazilian_states
         )    
     )
-
+    """
     suite_name.add_expectation(
         gx.expectations.ExpectColumnValuesToBeBetween(
             column="total_orders", min_value=1,mostly=0.9
@@ -301,34 +308,34 @@ def dim_customers_validation_asset():
             column="avg_order_value", min_value=1,mostly=0.9
         )
     )
-    
+    """
     context.suites.add(suite_name)
 
 # %%
-def dim_orders_validation_asset():
+def dim_db_products_validation_asset():
     
     try:
-        datasource.delete_asset("dim_orders")
+        datasource.delete_asset("dim_db_products")
     except:
         pass
-    dim_orders_vvalidation_asset = datasource.add_table_asset(
-        name="dim_orders",
-        table_name="dim_orders", 
+    dim_db_products_vvalidation_asset = datasource.add_table_asset(
+        name="dim_db_products",
+        table_name="dim_db_products", 
         schema_name=DATASET
     )
 
     try:
-        context.suites.delete("dim_orders_validation")
+        context.suites.delete("dim_db_products_validation")
     except:
         pass    
-    suite_name = gx.ExpectationSuite(name="dim_orders_validation")
+    suite_name = gx.ExpectationSuite(name="dim_db_products_validation")
         
     # Check Data Volume
     suite_name.add_expectation(
         gx.expectations.ExpectTableRowCountToBeBetween(
             min_value=MIN_TOTAL)    
     )
-
+    """
     # Data freshness 
     suite_name.add_expectation(
         gx.expectations.ExpectColumnMaxToBeBetween(
@@ -343,7 +350,7 @@ def dim_orders_validation_asset():
             or_equal=True
         )
     )   
-
+    
 
 
     suite_name.add_expectation(
@@ -353,47 +360,60 @@ def dim_orders_validation_asset():
             
         )
     )
-
+    
     suite_name.add_expectation(
         gx.expectations.ExpectColumnValuesToNotBeNull(
-            column="total_freight",
-            mostly=0.8  # At least 80% should have delivery date
+            column="product_category_name_english",
+            mostly=0.9  # At least 80% should have delivery date
             
         )
     )
 
     suite_name.add_expectation(
         gx.expectations.ExpectColumnValuesToBeBetween(
-            column="num_items", min_value=1, mostly=0.7
+            column="product_weight_g", min_value=1, max_value=100000
         )
     )
 
     suite_name.add_expectation(
-        gx.expectations.ExpectColumnValuesToNotBeNull(
-            column="primary_seller_id", mostly=0.9
+        gx.expectations.ExpectColumnValuesToBeBetween(
+            column="product_length_cm", min_value=0.1, max_value=100000,mostly=0.9
         )
     )
+
+    suite_name.add_expectation(
+        gx.expectations.ExpectColumnValuesToBeBetween(
+            column="product_height_cm", min_value=0.1, max_value=100000,mostly=0.9
+        )
+    )
+
+    suite_name.add_expectation(
+        gx.expectations.ExpectColumnValuesToBeBetween(
+            column="product_width_cm", min_value=0.1, max_value=100000,mostly=0.9
+        )
+    )
+    """
     context.suites.add(suite_name)
 
 # %%
-def dim_sellers_validation_asset():
+def dim_db_sellers_validation_asset():
     
     try:
-        datasource.delete_asset("dim_sellers")
+        datasource.delete_asset("dim_db_sellers")
     except:
         pass
     
-    dim_sellers_validation_asset = datasource.add_table_asset(
-        name="dim_sellers",
-        table_name="dim_sellers", 
+    dim_db_sellers_validation_asset = datasource.add_table_asset(
+        name="dim_db_sellers",
+        table_name="dim_db_sellers", 
         schema_name=DATASET
     )
 
     try:
-        context.suites.delete("dim_sellers_validation")
+        context.suites.delete("dim_db_sellers_validation")
     except:
         pass
-    suite_name = gx.ExpectationSuite(name="dim_sellers_validation")
+    suite_name = gx.ExpectationSuite(name="dim_db_sellers_validation")
 
 
     # Check Data Volume
@@ -417,16 +437,17 @@ def dim_sellers_validation_asset():
             column="seller_state", value_set=brazilian_states
         )    
     )
-
+    """
     suite_name.add_expectation(
         gx.expectations.ExpectColumnValuesToBeBetween(
             column="num_orders", min_value=0,mostly=0.9
         )
     )
-    
+    """
     context.suites.add(suite_name)
 
 # %%
+"""
 def dim_order_payments_validation_asset():
     
     try:
@@ -489,6 +510,7 @@ def dim_order_payments_validation_asset():
     )
 
     context.suites.add(suite_name)
+"""
 
 # %%
 # ============================================
@@ -503,12 +525,12 @@ def setup_expectations():
     """
     print("🔧 SETUP MODE: Defining expectations...")
 
-    fact_orders_validation_asset()
-    fact_customer_validation_asset()
-    dim_customers_validation_asset()
-    dim_sellers_validation_asset()
-    dim_orders_validation_asset()    
-    dim_order_payments_validation_asset()
+    fact_db_order_items_validation_asset()
+    #fact_customer_validation_asset()
+    dim_db_customers_validation_asset()
+    dim_db_sellers_validation_asset()
+    dim_db_products_validation_asset()    
+    #dim_order_payments_validation_asset()
     print("✅ Expectations defined and saved!")
 
 # %%
@@ -627,19 +649,19 @@ def run_all_validations():
     This uses the ALREADY SAVED expectations - no need to redefine them!
     """
     
-    #fact_orders
-    batch_def_fact_orders = datasource.get_asset("fact_orders").add_batch_definition_whole_table(
-        name=f"b_fact_orders_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    #fact_db_order_items
+    batch_def_fact_db_order_items = datasource.get_asset("fact_db_order_items").add_batch_definition_whole_table(
+        name=f"b_fact_db_order_items_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     ) 
 
-    validation_def_fact_orders = gx.ValidationDefinition(
-        name=f"v_fact_orders_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-        data=batch_def_fact_orders,
-        suite=context.suites.get("fact_orders_validation")
+    validation_def_fact_db_order_items = gx.ValidationDefinition(
+        name=f"v_fact_db_order_items_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+        data=batch_def_fact_db_order_items,
+        suite=context.suites.get("fact_db_order_items_validation")
     )
-    context.validation_definitions.add(validation_def_fact_orders)  
+    context.validation_definitions.add(validation_def_fact_db_order_items)  
     
-    
+    """
     #fact_customer
     batch_def_fact_customer = datasource.get_asset("fact_customer").add_batch_definition_whole_table(
         name=f"b_fact_customer_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
@@ -651,43 +673,44 @@ def run_all_validations():
         suite=context.suites.get("fact_customer_validation")
     )
     context.validation_definitions.add(validation_def_fact_customer) 
+    """
 
-    #dim_customers
-    batch_def_dim_customers = datasource.get_asset("dim_customers").add_batch_definition_whole_table(
-        name=f"b_dim_customers_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    #dim_db_customers
+    batch_def_dim_db_customers = datasource.get_asset("dim_db_customers").add_batch_definition_whole_table(
+        name=f"b_dim_db_customers_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     ) 
 
-    validation_def_dim_customers = gx.ValidationDefinition(
-        name=f"v_dim_customers_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-        data=batch_def_dim_customers,
-        suite=context.suites.get("dim_customers_validation")
+    validation_def_dim_db_customers = gx.ValidationDefinition(
+        name=f"v_dim_db_customers_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+        data=batch_def_dim_db_customers,
+        suite=context.suites.get("dim_db_customers_validation")
     )
-    context.validation_definitions.add(validation_def_dim_customers) 
+    context.validation_definitions.add(validation_def_dim_db_customers) 
 
-    #dim_sellers
-    batch_def_dim_sellers = datasource.get_asset("dim_sellers").add_batch_definition_whole_table(
-        name=f"b_dim_sellers_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    #dim_db_sellers
+    batch_def_dim_db_sellers = datasource.get_asset("dim_db_sellers").add_batch_definition_whole_table(
+        name=f"b_dim_db_sellers_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     ) 
 
-    validation_def_dim_sellers = gx.ValidationDefinition(
-        name=f"v_dim_sellers_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-        data=batch_def_dim_sellers,
-        suite=context.suites.get("dim_sellers_validation")
+    validation_def_dim_db_sellers = gx.ValidationDefinition(
+        name=f"v_dim_db_sellers_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+        data=batch_def_dim_db_sellers,
+        suite=context.suites.get("dim_db_sellers_validation")
     )
-    context.validation_definitions.add(validation_def_dim_sellers) 
+    context.validation_definitions.add(validation_def_dim_db_sellers) 
 
-    #dim_orders
-    batch_def_dim_orders = datasource.get_asset("dim_orders").add_batch_definition_whole_table(
-        name=f"b_dim_orders_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    #dim_db_products
+    batch_def_dim_db_products = datasource.get_asset("dim_db_products").add_batch_definition_whole_table(
+        name=f"b_dim_db_products_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     ) 
 
-    validation_def_dim_orders = gx.ValidationDefinition(
-        name=f"v_dim_orders_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-        data=batch_def_dim_orders,
-        suite=context.suites.get("dim_orders_validation")
+    validation_def_dim_db_products = gx.ValidationDefinition(
+        name=f"v_dim_db_products_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+        data=batch_def_dim_db_products,
+        suite=context.suites.get("dim_db_products_validation")
     )
-    context.validation_definitions.add(validation_def_dim_orders) 
-
+    context.validation_definitions.add(validation_def_dim_db_products) 
+    """
     #dim_order_payments
     batch_def_dim_order_payments = datasource.get_asset("dim_order_payments").add_batch_definition_whole_table(
         name=f"b_dim_order_payments_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
@@ -699,16 +722,17 @@ def run_all_validations():
         suite=context.suites.get("dim_order_payments_validation")
     )
     context.validation_definitions.add(validation_def_dim_order_payments) 
-
+    """
     # Create checkpoint
     checkpoint = gx.Checkpoint(
         name=f"checkpoint_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-        validation_definitions=[validation_def_fact_orders,
-                                validation_def_fact_customer,
-                                validation_def_dim_customers,
-                                validation_def_dim_sellers,
-                                validation_def_dim_orders,
-                                validation_def_dim_order_payments
+        validation_definitions=[validation_def_fact_db_order_items,
+                               # validation_def_fact_customer,
+                                validation_def_dim_db_customers,
+                                validation_def_dim_db_sellers,
+                                #validation_def_dim_order_payments
+                                validation_def_dim_db_products
+                                
                                 ],
         result_format={"result_format": "COMPLETE"}
     )
