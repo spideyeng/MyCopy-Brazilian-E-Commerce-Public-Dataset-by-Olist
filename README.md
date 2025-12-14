@@ -21,11 +21,11 @@ project_root/
 
 ## 3. Environment Setup
 Clone repo:
-```git clone https://github.com/pinghar/Brazilian-E-Commerce-Public-Dataset-by-Olist.git```/n
+```git clone https://github.com/pinghar/Brazilian-E-Commerce-Public-Dataset-by-Olist.git```<br>
 ```cd Brazilian-E-Commerce-Public-Dataset-by-Olist```
 
 Create environment:
-```conda env create -f eltn_environment.yml```
+```conda env create -f eltn_environment.yml```<br>
 ```conda activate eltn```
 
 ## 4. Configure .env
