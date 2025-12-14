@@ -52,25 +52,25 @@ meltano run tap-csv target-bigquery
 ## 7. dbt – Staging, Star Schema & Tests
 cd ./Dbt_Final/
 
-# 1. Connection Check
+### 1. Connection Check
 dbt debug
 
-# 2. Install Packages (First Time only)
+### 2. Install Packages (First Time only)
 dbt deps
 
-# 3. Staging Layer
+### 3. Staging Layer
 dbt run  --select stg_db_*
 dbt test --select stg_db_*
 
-# 4. Dimension Layer
+### 4. Dimension Layer
 dbt run  --select dim_db_*
 dbt test --select dim_db_*
 
-# 5. Fact Layer
+### 5. Fact Layer
 dbt run  --select fact_db_*
 dbt test --select fact_db_*
 
-# 6. Or ALL-IN-ONE
+### 6. Or ALL-IN-ONE
 dbt build --full-refresh
 
 ## 8. Great Expectations
@@ -83,18 +83,18 @@ python EDA_ML/EDA_ML.py
 [View Live Dashboard](https://pinghar.github.io/Brazilian-E-Commerce-Public-Dataset-by-Olist/).
 
 ## 11. Dagster Orchestration
-# For who execute Dagster for the first time
+### For who execute Dagster for the first time
 
-# 1. go to your project root folder
+### 1. go to your project root folder
 cd ~/Brazilian-E-Commerce-Public-Dataset-by-Olist
 
-# 2. install dagster into your existing eltn env
+### 2. install dagster into your existing eltn env
 conda env update -f eltn_environment.yml
 
-# 3. ensure all *.py files executable
+### 3. ensure all *.py files executable
 chmod 755 Dbt_Final/*.py GX/*.py EDA_ML/*.py
 
-# 4. launch dagster dashboard under your project root folder
+### 4. launch dagster dashboard under your project root folder
 dagster dev -m dagster_proj.definitions
 
 ## 12. Architecture Overview
