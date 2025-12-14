@@ -21,12 +21,12 @@ project_root/
 
 ## 3. Environment Setup
 Clone repo:
-git clone https://github.com/pinghar/Brazilian-E-Commerce-Public-Dataset-by-Olist.git
-cd Brazilian-E-Commerce-Public-Dataset-by-Olist
+```git clone https://github.com/pinghar/Brazilian-E-Commerce-Public-Dataset-by-Olist.git```
+```cd Brazilian-E-Commerce-Public-Dataset-by-Olist```
 
 Create environment:
-conda env create -f eltn_environment.yml
-conda activate eltn
+```conda env create -f eltn_environment.yml```
+```conda activate eltn```
 
 ## 4. Configure .env
 KAGGLE_USERNAME="your_kaggle_username"
