@@ -21,7 +21,7 @@ project_root/
 
 ## 3. Environment Setup
 Clone repo:
-```git clone https://github.com/pinghar/Brazilian-E-Commerce-Public-Dataset-by-Olist.git```
+```git clone https://github.com/pinghar/Brazilian-E-Commerce-Public-Dataset-by-Olist.git```/n
 ```cd Brazilian-E-Commerce-Public-Dataset-by-Olist```
 
 Create environment:
