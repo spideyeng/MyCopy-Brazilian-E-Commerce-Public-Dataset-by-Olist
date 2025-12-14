@@ -20,7 +20,7 @@ project_root/
 - README.md
 
 ## 3. Environment Setup
-Clone repo:
+Clone repo:<br>
 ```git clone https://github.com/pinghar/Brazilian-E-Commerce-Public-Dataset-by-Olist.git```<br>
 ```cd Brazilian-E-Commerce-Public-Dataset-by-Olist```
 
