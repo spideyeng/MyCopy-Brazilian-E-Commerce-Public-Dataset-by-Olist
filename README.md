@@ -49,7 +49,7 @@ GX/uncommitted/<br>
 ```meltano run tap-csv target-bigquery```<br>
 
 ## 7. dbt – Staging, Star Schema & Tests
-```cd ./Dbt_Final/<br>```
+```cd ./Dbt_Final/```
 
 ### 1. Connection Check
 ```dbt debug```
