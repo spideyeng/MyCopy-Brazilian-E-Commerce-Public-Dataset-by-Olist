@@ -85,7 +85,7 @@ GX/uncommitted/<br>
 
 > ⚠️ **Access Notice**  
 > The live dashboard is restricted and only accessible to authorized team members.  
-> External users may not be able to view it due to email-based access controls.
+> External users may not be able to view it due to bigquery warehouse data access controls.
 
 🎥 **Dashboard Walkthrough Video**  
 To ensure visibility for everyone, a recorded dashboard walkthrough is provided below:  
