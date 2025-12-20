@@ -79,7 +79,18 @@ GX/uncommitted/<br>
 ```python EDA_ML/EDA_ML.py```
 
 ## 10. Dashboard
-[View Live Dashboard](https://pinghar.github.io/Brazilian-E-Commerce-Public-Dataset-by-Olist/).
+
+🔗 **Live Dashboard (Restricted Access)**  
+[View Live Dashboard](https://pinghar.github.io/Brazilian-E-Commerce-Public-Dataset-by-Olist/)
+
+> ⚠️ **Access Notice**  
+> The live dashboard is restricted and only accessible to authorized team members.  
+> External users may not be able to view it due to email-based access controls.
+
+🎥 **Dashboard Walkthrough Video**  
+To ensure visibility for everyone, a recorded dashboard walkthrough is provided below:  
+[View Dashboard Video](https://pinghar.github.io/Brazilian-E-Commerce-Public-Dataset-by-Olist/)
+
 
 ## 11. Dagster Orchestration
 ### For who execute Dagster for the first time
