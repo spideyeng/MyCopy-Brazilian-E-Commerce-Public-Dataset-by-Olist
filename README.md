@@ -89,7 +89,7 @@ GX/uncommitted/<br>
 
 🎥 **Dashboard Walkthrough Video**  
 To ensure visibility for everyone, a recorded dashboard walkthrough is provided below:  
-[View Dashboard Video](https://pinghar.github.io/Brazilian-E-Commerce-Public-Dataset-by-Olist/)
+[View Dashboard Video](https://github.com/pinghar/Brazilian-E-Commerce-Public-Dataset-by-Olist/blob/main/Dashboard%20Video.mp4)
 
 
 ## 11. Dagster Orchestration
